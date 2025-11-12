@@ -1,0 +1,17 @@
+{
+  "extends": ["next/core-web-vitals"],
+  "rules": {
+    "react/jsx-tag-spacing": ["error", { "beforeSelfClosing": "always" }],
+    "react/self-closing-comp": "error",
+    "react/jsx-closing-bracket-location": ["error", "tag-aligned"],
+    "react/jsx-indent": ["error", 2],
+    "react/jsx-no-useless-fragment": "error",
+    "no-unreachable": "error"
+  }
+}
+
+
+
+
+
+

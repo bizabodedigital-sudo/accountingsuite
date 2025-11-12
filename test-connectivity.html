@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>API Connectivity Test</title>
+</head>
+<body>
+    <h1>API Connectivity Test</h1>
+    <button onclick="testAPI()">Test API Connection</button>
+    <div id="result"></div>
+
+    <script>
+        async function testAPI() {
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = 'Testing...';
+            
+            try {
+                console.log('Testing API connection to: http://localhost:3001/api/test');
+                const response = await fetch('http://localhost:3001/api/test');
+                const data = await response.json();
+                
+                console.log('API Response:', data);
+                resultDiv.innerHTML = `<p style="color: green;">✅ Success: ${JSON.stringify(data)}</p>`;
+            } catch (error) {
+                console.error('API Error:', error);
+                resultDiv.innerHTML = `<p style="color: red;">❌ Error: ${error.message}</p>`;
+            }
+        }
+
+        async function testLogin() {
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = 'Testing login...';
+            
+            try {
+                console.log('Testing login to: http://localhost:3001/api/auth/login');
+                const response = await fetch('http://localhost:3001/api/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        email: 'owner@jamaicatech.com',
+                        password: 'password123'
+                    })
+                });
+                
+                const data = await response.json();
+                console.log('Login Response:', data);
+                resultDiv.innerHTML = `<p style="color: green;">✅ Login Success: ${JSON.stringify(data)}</p>`;
+            } catch (error) {
+                console.error('Login Error:', error);
+                resultDiv.innerHTML = `<p style="color: red;">❌ Login Error: ${error.message}</p>`;
+            }
+        }
+    </script>
+    
+    <button onclick="testLogin()">Test Login</button>
+</body>
+</html>
+
+
+
+

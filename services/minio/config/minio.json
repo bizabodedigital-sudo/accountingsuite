@@ -1,0 +1,26 @@
+{
+  "version": "9",
+  "credential": {
+    "accessKey": "minioadmin",
+    "secretKey": "minioadmin123"
+  },
+  "region": "us-east-1",
+  "browser": "on",
+  "domain": "",
+  "storageclass": {
+    "standard": "",
+    "rrs": "",
+    "ol": ""
+  },
+  "cache": {
+    "drives": [],
+    "expiry": 90,
+    "maxuse": 80,
+    "exclude": []
+  },
+  "notify": {
+    "console": {
+      "enable": true
+    }
+  }
+}

@@ -1,0 +1,54 @@
+{
+  "name": "bizabode-accounting-suite",
+  "version": "1.0.0",
+  "description": "Modern invoicing & bookkeeping SaaS for Jamaican SMEs",
+  "main": "index.js",
+  "scripts": {
+    "install:bmad": "node agents/enhanced-orchestrator.js",
+    "dev": "docker-compose up -d",
+    "build": "docker-compose build",
+    "start": "docker-compose up",
+    "stop": "docker-compose down",
+    "clean": "docker-compose down -v --remove-orphans",
+    "logs": "docker-compose logs -f",
+    "backend:dev": "cd backend && npm run dev",
+    "frontend:dev": "cd frontend && npm run dev",
+    "test": "cd backend && npm test && cd ../frontend && npm test",
+    "lint": "cd backend && npm run lint && cd ../frontend && npm run lint"
+  },
+  "keywords": [
+    "accounting",
+    "invoicing",
+    "bookkeeping",
+    "jamaica",
+    "saas",
+    "mongodb",
+    "nextjs",
+    "express"
+  ],
+  "author": "Bizabode Team",
+  "license": "ISC",
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=8.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/bizabode/accounting-suite.git"
+  },
+  "bugs": {
+    "url": "https://github.com/bizabode/accounting-suite/issues"
+  },
+  "homepage": "https://github.com/bizabode/accounting-suite#readme"
+}
+
+
+
+
+
+
+
+
+
+
+
