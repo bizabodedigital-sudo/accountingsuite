@@ -19,6 +19,11 @@ const fileRoutes = require('./routes/files');
 const recurringInvoiceRoutes = require('./routes/recurringInvoices');
 const settingsRoutes = require('./routes/settings');
 const reportsRoutes = require('./routes/reports');
+const backupRoutes = require('./routes/backup');
+const documentRoutes = require('./routes/documents');
+const currencyRoutes = require('./routes/currencies');
+const inventoryRoutes = require('./routes/inventory');
+const taxRoutes = require('./routes/tax');
 
 const app = express();
 
@@ -101,10 +106,15 @@ app.use('/api/recurring-invoices', recurringInvoiceRoutes);
 app.use('/api/settings', settingsRoutes);
 app.use('/api/reports', reportsRoutes);
 app.use('/api/reconciliation', reconciliationRoutes);
+app.use('/api/backup', backupRoutes);
+app.use('/api/documents', documentRoutes);
+app.use('/api/currencies', currencyRoutes);
+app.use('/api/inventory', inventoryRoutes);
+app.use('/api/tax', taxRoutes);
 
 // Debug log for visibility
 console.log('Registered routes:');
-['auth', 'customers', 'invoices', 'expenses', 'products', 'files', 'recurring-invoices', 'settings', 'reports', 'reconciliation'].forEach(route =>
+['auth', 'customers', 'invoices', 'expenses', 'products', 'files', 'recurring-invoices', 'settings', 'reports', 'reconciliation', 'backup', 'documents', 'currencies', 'inventory', 'tax'].forEach(route =>
   console.log(`- /api/${route}`)
 );
 

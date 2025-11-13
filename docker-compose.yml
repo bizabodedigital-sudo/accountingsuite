@@ -41,7 +41,7 @@ services:
       MINIO_DEFAULT_BUCKETS: bizabode-accounting
       MINIO_VOLUMES: /data
     volumes:
-      - //c/Users/henry/minio-data:/data
+      - minio_data:/data
       - ./services/minio/config:/root/.minio
     command: server /data --console-address ":9001"
     networks:

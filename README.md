@@ -4,6 +4,8 @@ A modern invoicing & bookkeeping SaaS for Jamaican SMEs, built with Next.js, Nod
 
 ## 🚀 Quick Start
 
+### Local Development
+
 ```bash
 # Install and build all components with hang protection
 npm run install:bmad
@@ -15,6 +17,16 @@ npm run dev
 # Frontend: http://localhost:3000
 # Backend API: http://localhost:3001
 ```
+
+### Production Deployment
+
+See [DEPLOYMENT.md](./DEPLOYMENT.md) for detailed production deployment instructions using Coolify.
+
+**Quick Production Setup:**
+1. Configure environment variables (see `.env.production.example`)
+2. Deploy using `docker-compose.prod.yml`
+3. Seed database: `node scripts/seed-database.js`
+4. Access your production instance
 
 ## 🛡️ Enhanced Features
 
@@ -189,6 +201,8 @@ For support and questions:
 ---
 
 **Built with ❤️ for Jamaican SMEs by the Bizabode Team**
+
+
 
 
 

@@ -198,6 +198,182 @@ class EmailService {
     `;
   }
 
+  async sendPasswordResetEmail(user, resetToken, resetUrl) {
+    try {
+      if (!this.transporter) {
+        logger.warn('Email service not available - password reset email not sent');
+        return { success: false, error: 'Email service not configured' };
+      }
+
+      const mailOptions = {
+        from: `"Bizabode" <${config.email.smtp.user}>`,
+        to: user.email,
+        subject: 'Password Reset Request - Bizabode',
+        html: this.generatePasswordResetEmailHTML(user, resetToken, resetUrl)
+      };
+
+      const result = await this.transporter.sendMail(mailOptions);
+      logger.info(`Password reset email sent to ${user.email}: ${result.messageId}`);
+      
+      return { success: true, messageId: result.messageId };
+    } catch (error) {
+      logger.error('Failed to send password reset email:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  async sendInvoiceReminderEmail(invoice, customer, daysOverdue = 0) {
+    try {
+      if (!this.transporter) {
+        logger.warn('Email service not available - reminder email not sent');
+        return { success: false, error: 'Email service not configured' };
+      }
+
+      const mailOptions = {
+        from: `"${invoice.tenantId?.name || 'Bizabode'}" <${config.email.smtp.user}>`,
+        to: customer.email,
+        subject: `Payment Reminder: Invoice ${invoice.number}`,
+        html: this.generateInvoiceReminderEmailHTML(invoice, customer, daysOverdue)
+      };
+
+      const result = await this.transporter.sendMail(mailOptions);
+      logger.info(`Invoice reminder email sent to ${customer.email}: ${result.messageId}`);
+      
+      return { success: true, messageId: result.messageId };
+    } catch (error) {
+      logger.error('Failed to send invoice reminder email:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  async sendCustomEmail(to, subject, htmlContent, attachments = []) {
+    try {
+      if (!this.transporter) {
+        logger.warn('Email service not available');
+        return { success: false, error: 'Email service not configured' };
+      }
+
+      const mailOptions = {
+        from: `"Bizabode" <${config.email.smtp.user}>`,
+        to: Array.isArray(to) ? to.join(', ') : to,
+        subject,
+        html: htmlContent,
+        attachments
+      };
+
+      const result = await this.transporter.sendMail(mailOptions);
+      logger.info(`Custom email sent: ${result.messageId}`);
+      
+      return { success: true, messageId: result.messageId };
+    } catch (error) {
+      logger.error('Failed to send custom email:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  generatePasswordResetEmailHTML(user, resetToken, resetUrl) {
+    return `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="utf-8">
+        <title>Password Reset</title>
+        <style>
+          body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+          .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+          .header { background: #007BFF; color: white; padding: 20px; text-align: center; }
+          .content { padding: 20px; background: #f9f9f9; }
+          .button { display: inline-block; padding: 12px 24px; background: #007BFF; color: white; text-decoration: none; border-radius: 5px; margin: 20px 0; }
+          .footer { text-align: center; padding: 20px; color: #666; font-size: 12px; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <h1>Password Reset Request</h1>
+          </div>
+          
+          <div class="content">
+            <p>Dear ${user.firstName} ${user.lastName},</p>
+            
+            <p>We received a request to reset your password for your Bizabode account.</p>
+            
+            <p>Click the button below to reset your password:</p>
+            
+            <a href="${resetUrl}" class="button">Reset Password</a>
+            
+            <p>Or copy and paste this link into your browser:</p>
+            <p style="word-break: break-all; color: #007BFF;">${resetUrl}</p>
+            
+            <p>This link will expire in 1 hour for security reasons.</p>
+            
+            <p>If you did not request a password reset, please ignore this email or contact support if you have concerns.</p>
+          </div>
+          
+          <div class="footer">
+            <p>This is an automated message from Bizabode Accounting Suite</p>
+          </div>
+        </div>
+      </body>
+      </html>
+    `;
+  }
+
+  generateInvoiceReminderEmailHTML(invoice, customer, daysOverdue) {
+    const overdueText = daysOverdue > 0 
+      ? `<p style="color: #dc3545; font-weight: bold;">This invoice is ${daysOverdue} day(s) overdue.</p>`
+      : '<p>This is a friendly reminder about your outstanding invoice.</p>';
+
+    return `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="utf-8">
+        <title>Payment Reminder</title>
+        <style>
+          body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+          .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+          .header { background: #007BFF; color: white; padding: 20px; text-align: center; }
+          .content { padding: 20px; background: #f9f9f9; }
+          .invoice-details { background: white; padding: 20px; margin: 20px 0; border-radius: 8px; }
+          .total { font-size: 18px; font-weight: bold; color: #007BFF; }
+          .footer { text-align: center; padding: 20px; color: #666; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <h1>Payment Reminder</h1>
+            <p>Invoice ${invoice.number}</p>
+          </div>
+          
+          <div class="content">
+            <p>Dear ${customer.name},</p>
+            
+            ${overdueText}
+            
+            <div class="invoice-details">
+              <h3>Invoice Details</h3>
+              <p><strong>Invoice Number:</strong> ${invoice.number}</p>
+              <p><strong>Issue Date:</strong> ${new Date(invoice.issueDate).toLocaleDateString()}</p>
+              <p><strong>Due Date:</strong> ${new Date(invoice.dueDate).toLocaleDateString()}</p>
+              <p><strong>Amount Due:</strong> <span class="total">$${invoice.total.toFixed(2)}</span></p>
+            </div>
+            
+            <p>Please make payment at your earliest convenience. If you have already made payment, please disregard this reminder.</p>
+            
+            <p>Thank you for your business!</p>
+          </div>
+          
+          <div class="footer">
+            <p>This is an automated message from Bizabode Accounting Suite</p>
+          </div>
+        </div>
+      </body>
+      </html>
+    `;
+  }
+
   async testConnection() {
     try {
       if (!this.transporter) {
@@ -215,6 +391,8 @@ class EmailService {
 }
 
 module.exports = new EmailService();
+
+
 
 
 

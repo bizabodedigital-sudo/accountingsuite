@@ -3,6 +3,7 @@ const Customer = require('../models/Customer');
 const Tenant = require('../models/Tenant');
 const logger = require('../config/logger');
 const pdfService = require('../services/pdfService');
+const taxService = require('../services/taxService');
 
 // @desc    Get all invoices
 // @route   GET /api/invoices
@@ -157,6 +158,21 @@ const createInvoice = async (req, res) => {
         success: false,
         error: 'Customer not found'
       });
+    }
+
+    // Calculate tax using Jamaican tax service if taxType is provided
+    let taxCalculation = null;
+    if (req.body.taxType) {
+      const subtotal = req.body.items.reduce((sum, item) => sum + (item.quantity * item.unitPrice), 0);
+      taxCalculation = taxService.calculateGCT(
+        subtotal,
+        req.body.taxType,
+        req.body.customTaxRate
+      );
+      
+      // Update tax rate and amount in request body
+      req.body.taxRate = taxCalculation.taxRate;
+      req.body.taxAmount = taxCalculation.taxAmount;
     }
 
     const invoiceData = {

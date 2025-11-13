@@ -67,6 +67,11 @@ const invoiceSchema = new mongoose.Schema({
     required: [true, 'Subtotal is required'],
     min: [0, 'Subtotal must be greater than or equal to 0']
   },
+  taxType: {
+    type: String,
+    enum: ['STANDARD', 'ZERO', 'EXEMPT', 'CUSTOM'],
+    default: 'STANDARD'
+  },
   taxRate: {
     type: Number,
     default: 0,
@@ -77,6 +82,11 @@ const invoiceSchema = new mongoose.Schema({
     type: Number,
     default: 0,
     min: [0, 'Tax amount must be greater than or equal to 0']
+  },
+  customTaxRate: {
+    type: Number,
+    min: [0, 'Custom tax rate must be greater than or equal to 0'],
+    max: [100, 'Custom tax rate cannot exceed 100%']
   },
   total: {
     type: Number,

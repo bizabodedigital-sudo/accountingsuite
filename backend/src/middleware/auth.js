@@ -80,6 +80,38 @@ const authorize = (...roles) => {
   };
 };
 
+// Check if user has specific permission
+const hasPermission = (permission) => {
+  return async (req, res, next) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({
+          success: false,
+          error: 'Not authorized, user not authenticated'
+        });
+      }
+
+      const { Permission, ROLE_PERMISSIONS } = require('../models/Permission');
+      const userPermissions = ROLE_PERMISSIONS[req.user.role] || [];
+
+      if (!userPermissions.includes(permission.toUpperCase())) {
+        return res.status(403).json({
+          success: false,
+          error: `User does not have permission: ${permission}`
+        });
+      }
+
+      next();
+    } catch (error) {
+      logger.error('Permission check error:', error);
+      return res.status(500).json({
+        success: false,
+        error: 'Server error checking permissions'
+      });
+    }
+  };
+};
+
 // Tenant isolation middleware
 const tenantFilter = (model) => {
   return (req, res, next) => {
@@ -108,7 +140,8 @@ const tenantFilter = (model) => {
 module.exports = {
   protect,
   authorize,
-  tenantFilter
+  tenantFilter,
+  hasPermission
 };
 
 
