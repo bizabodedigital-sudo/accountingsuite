@@ -1,6 +1,7 @@
 const Expense = require('../models/Expense');
 const Customer = require('../models/Customer');
 const logger = require('../config/logger');
+const eventEmitter = require('../services/eventEmitter');
 
 // @desc    Get all expenses
 // @route   GET /api/expenses
@@ -111,6 +112,9 @@ const createExpense = async (req, res) => {
       .populate('vendorId', 'name email')
       .populate('createdBy', 'firstName lastName');
 
+    // Emit webhook event
+    eventEmitter.emitEvent('expense.created', populatedExpense.toObject(), req.user.tenantId);
+
     res.status(201).json({
       success: true,
       data: populatedExpense
@@ -144,6 +148,9 @@ const updateExpense = async (req, res) => {
       });
     }
 
+    // Emit webhook event
+    eventEmitter.emitEvent('expense.updated', expense.toObject(), req.user.tenantId);
+
     res.status(200).json({
       success: true,
       data: expense
@@ -173,6 +180,9 @@ const deleteExpense = async (req, res) => {
         error: 'Expense not found'
       });
     }
+
+    // Emit webhook event
+    eventEmitter.emitEvent('expense.deleted', { id: expense._id, amount: expense.amount }, req.user.tenantId);
 
     res.status(200).json({
       success: true,
@@ -258,6 +268,7 @@ module.exports = {
   deleteExpense,
   getExpenseSummary
 };
+
 
 
 

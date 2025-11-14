@@ -4,6 +4,7 @@ const Tenant = require('../models/Tenant');
 const logger = require('../config/logger');
 const pdfService = require('../services/pdfService');
 const taxService = require('../services/taxService');
+const eventEmitter = require('../services/eventEmitter');
 
 // @desc    Get all invoices
 // @route   GET /api/invoices
@@ -188,6 +189,9 @@ const createInvoice = async (req, res) => {
       .populate('customerId', 'name email')
       .populate('createdBy', 'firstName lastName');
 
+    // Emit webhook event
+    eventEmitter.emitEvent('invoice.created', populatedInvoice.toObject(), req.user.tenantId);
+
     res.status(201).json({
       success: true,
       data: populatedInvoice
@@ -233,6 +237,9 @@ const updateInvoice = async (req, res) => {
       });
     }
 
+    // Emit webhook event
+    eventEmitter.emitEvent('invoice.updated', invoice.toObject(), req.user.tenantId);
+
     res.status(200).json({
       success: true,
       data: invoice
@@ -262,6 +269,9 @@ const deleteInvoice = async (req, res) => {
         error: 'Invoice not found'
       });
     }
+
+    // Emit webhook event
+    eventEmitter.emitEvent('invoice.deleted', { id: invoice._id, number: invoice.number }, req.user.tenantId);
 
     res.status(200).json({
       success: true,
@@ -299,6 +309,9 @@ const sendInvoice = async (req, res) => {
     // TODO: Re-enable email sending when services are ready
     logger.info(`Invoice ${invoice.number} status updated to SENT`);
 
+    // Emit webhook event
+    eventEmitter.emitEvent('invoice.sent', invoice.toObject(), req.user.tenantId);
+
     res.status(200).json({
       success: true,
       data: invoice,
@@ -332,6 +345,9 @@ const voidInvoice = async (req, res) => {
         error: 'Invoice not found'
       });
     }
+
+    // Emit webhook event
+    eventEmitter.emitEvent('invoice.voided', invoice.toObject(), req.user.tenantId);
 
     res.status(200).json({
       success: true,

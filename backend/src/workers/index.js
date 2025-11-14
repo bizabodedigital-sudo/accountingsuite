@@ -1,5 +1,6 @@
 const { Queue } = require('bullmq');
 const EmailWorker = require('./emailWorker');
+const WebhookWorker = require('./webhookWorker');
 const config = require('../config/env');
 const logger = require('../config/logger');
 
@@ -20,10 +21,14 @@ class WorkerManager {
       
       // Initialize queues
       this.queues.email = new Queue('email-queue', { connection: this.connection });
+      this.queues.webhook = new Queue('webhook-retry', { connection: this.connection });
       
       // Initialize workers
       this.workers.email = new EmailWorker(this.connection);
       this.workers.email.start();
+      
+      this.workers.webhook = new WebhookWorker(this.connection);
+      this.workers.webhook.start();
       
       // Setup queue monitoring
       this.setupQueueMonitoring();
@@ -118,6 +123,7 @@ if (require.main === module) {
 }
 
 module.exports = WorkerManager;
+
 
 
 

@@ -1,5 +1,6 @@
 const Customer = require('../models/Customer');
 const logger = require('../config/logger');
+const eventEmitter = require('../services/eventEmitter');
 
 // @desc    Get all customers
 // @route   GET /api/customers
@@ -88,6 +89,9 @@ const createCustomer = async (req, res) => {
 
     const customer = await Customer.create(customerData);
 
+    // Emit webhook event
+    eventEmitter.emitEvent('customer.created', customer.toObject(), req.user.tenantId);
+
     res.status(201).json({
       success: true,
       data: customer
@@ -118,6 +122,9 @@ const updateCustomer = async (req, res) => {
         error: 'Customer not found'
       });
     }
+
+    // Emit webhook event
+    eventEmitter.emitEvent('customer.updated', customer.toObject(), req.user.tenantId);
 
     res.status(200).json({
       success: true,
@@ -150,6 +157,9 @@ const deleteCustomer = async (req, res) => {
       });
     }
 
+    // Emit webhook event
+    eventEmitter.emitEvent('customer.deleted', { id: customer._id, name: customer.name }, req.user.tenantId);
+
     res.status(200).json({
       success: true,
       data: {}
@@ -170,6 +180,7 @@ module.exports = {
   updateCustomer,
   deleteCustomer
 };
+
 
 
 

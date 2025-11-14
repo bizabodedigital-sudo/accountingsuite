@@ -24,6 +24,9 @@ const documentRoutes = require('./routes/documents');
 const currencyRoutes = require('./routes/currencies');
 const inventoryRoutes = require('./routes/inventory');
 const taxRoutes = require('./routes/tax');
+const webhookRoutes = require('./routes/webhooks');
+const integrationRoutes = require('./routes/integrations');
+const apiKeyRoutes = require('./routes/apiKeys');
 
 const app = express();
 
@@ -111,10 +114,13 @@ app.use('/api/documents', documentRoutes);
 app.use('/api/currencies', currencyRoutes);
 app.use('/api/inventory', inventoryRoutes);
 app.use('/api/tax', taxRoutes);
+app.use('/api/webhooks', webhookRoutes);
+app.use('/api/integrations', integrationRoutes);
+app.use('/api/api-keys', apiKeyRoutes);
 
 // Debug log for visibility
 console.log('Registered routes:');
-['auth', 'customers', 'invoices', 'expenses', 'products', 'files', 'recurring-invoices', 'settings', 'reports', 'reconciliation', 'backup', 'documents', 'currencies', 'inventory', 'tax'].forEach(route =>
+['auth', 'customers', 'invoices', 'expenses', 'products', 'files', 'recurring-invoices', 'settings', 'reports', 'reconciliation', 'backup', 'documents', 'currencies', 'inventory', 'tax', 'webhooks', 'integrations', 'api-keys'].forEach(route =>
   console.log(`- /api/${route}`)
 );
 
