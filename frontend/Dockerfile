@@ -5,13 +5,16 @@ WORKDIR /app
 
 # Copy package.json and install dependencies first (for caching)
 COPY package*.json ./
-RUN npm install
+RUN npm ci --only=production=false
 
 # Copy the rest of the app
 COPY . .
 
+# Build the Next.js application
+RUN npm run build
+
 # Expose the port Next.js runs on
 EXPOSE 3000
 
-# Default command for development
-CMD ["npm", "run", "dev"]
+# Start the production server
+CMD ["npm", "start"]
