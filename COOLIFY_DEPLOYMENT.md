@@ -19,23 +19,40 @@ Biz Accounts/
 ├── frontend/
 │   ├── Dockerfile          # Used by frontend
 │   └── src/
-└── docker-compose.yml
+├── docker-compose.yml      # Development compose file
+├── docker-compose.prod.yml # Production compose file
+└── docker-compose.coolify.yml # Coolify-optimized compose file (recommended)
 ```
+
+**Note**: Use `docker-compose.coolify.yml` for Coolify deployments as it's optimized for Coolify's container naming and management.
 
 ## 🚀 Deployment Steps
 
+### Option A: Deploy Using Docker Compose (Recommended)
+
+**This is the easiest way to deploy all services at once:**
+
+1. **Create New Resource** → **Docker Compose**
+2. **Docker Compose File**: `docker-compose.coolify.yml`
+3. **Select Services**: Choose which services to deploy (or deploy all)
+4. **Environment Variables**: Set all required environment variables (see below)
+5. **Deploy**: Coolify will build and start all selected services
+
+**Advantages:**
+- Deploys all services together
+- Handles dependencies automatically
+- Uses health checks to ensure proper startup order
+- Coolify manages container names automatically
+
+### Option B: Deploy Services Individually
+
 ### 1. Deploy Backend Service
 
-1. **Create New Resource** → **Docker Compose** or **Dockerfile**
-2. **If using Dockerfile:**
-   - **Build Context**: `./backend` (or `backend/` if using relative path)
-   - **Dockerfile Path**: `Dockerfile` (relative to build context)
-   - **Port**: `3001`
-   - **Environment Variables** (see below)
-
-3. **If using Docker Compose:**
-   - **Docker Compose File**: `docker-compose.yml` or `docker-compose.prod.yml`
-   - Select the `backend` service
+1. **Create New Resource** → **Dockerfile**
+2. **Build Context**: `./backend` (or `backend/` if using relative path)
+3. **Dockerfile Path**: `Dockerfile` (relative to build context)
+4. **Port**: `3001`
+5. **Environment Variables** (see below)
 
 ### 2. Deploy Frontend Service
 
@@ -161,6 +178,39 @@ Dockerfile
 3. Verify the Dockerfile exists in the correct location:
    - Backend Dockerfile: `backend/Dockerfile`
    - Frontend Dockerfile: `frontend/Dockerfile`
+
+### Error: "No such container: [service-name]-[hash]"
+
+**This error occurs when containers haven't been created yet or failed to start.**
+
+**Solutions**:
+
+1. **If using Docker Compose:**
+   - Use `docker-compose.coolify.yml` instead of `docker-compose.yml`
+   - The Coolify-optimized file removes explicit `container_name` fields, allowing Coolify to manage container names
+   - Make sure all services are set to "Start" in Coolify
+   - Check the build logs to see if containers are being created
+
+2. **Check Build Status:**
+   - Go to each service in Coolify
+   - Check the "Builds" tab to see if the build succeeded
+   - If build failed, check the build logs for errors
+
+3. **Verify Docker Compose File:**
+   - Ensure you're using `docker-compose.coolify.yml` (recommended for Coolify)
+   - Or remove `container_name` fields from your compose file
+   - Coolify generates its own container names based on project/service names
+
+4. **Start Services:**
+   - In Coolify, make sure all services are in "Running" state
+   - If services show as "Stopped", click "Start" or "Redeploy"
+   - Wait for services to fully start (check health checks)
+
+5. **Check Dependencies:**
+   - Ensure MongoDB and Redis are running first
+   - Backend and Worker depend on MongoDB and Redis
+   - Frontend depends on Backend
+   - Services with `depends_on` will wait for dependencies to be healthy
 
 ### Common Issues
 
