@@ -1,7 +1,14 @@
 const mongoose = require('mongoose');
 const logger = require('./logger');
 
-const { createIndexes } = require('../models/indexes');
+// Try to load indexes module, but don't fail if it doesn't exist
+let createIndexes = null;
+try {
+  const indexesModule = require('../models/indexes');
+  createIndexes = indexesModule.createIndexes;
+} catch (error) {
+  logger.warn('⚠️  Could not load indexes module:', error.message);
+}
 
 const connectDB = async () => {
   if (!process.env.MONGODB_URI) {
@@ -19,14 +26,18 @@ const connectDB = async () => {
     logger.info(`✅ MongoDB connected: ${conn.connection.host}`);
     
     // Create indexes after connection
-    mongoose.connection.once('open', async () => {
-      try {
-        await createIndexes();
-        logger.info('✅ Database indexes created');
-      } catch (error) {
-        logger.error('Failed to create indexes:', error);
-      }
-    });
+    if (createIndexes) {
+      mongoose.connection.once('open', async () => {
+        try {
+          await createIndexes();
+          logger.info('✅ Database indexes created');
+        } catch (error) {
+          logger.error('Failed to create indexes:', error);
+        }
+      });
+    } else {
+      logger.warn('⚠️  Index creation skipped (indexes module not available)');
+    }
   } catch (error) {
     logger.error(`❌ MongoDB connection error: ${error.message}`);
     logger.info('🔄 Retrying MongoDB connection in 5 seconds...');
