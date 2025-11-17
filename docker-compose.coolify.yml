@@ -90,11 +90,11 @@ services:
     networks:
       - bizabode-network
     healthcheck:
-      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3001/healthz', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"]
+      test: ["CMD", "curl", "-f", "http://localhost:3001/healthz"]
       interval: 30s
       timeout: 10s
       retries: 5
-      start_period: 60s
+      start_period: 120s
 
   # 🎨 Frontend
   frontend:
