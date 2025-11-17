@@ -2,6 +2,7 @@ const Expense = require('../models/Expense');
 const Customer = require('../models/Customer');
 const logger = require('../config/logger');
 const eventEmitter = require('../services/eventEmitter');
+const AccountingEngine = require('../services/accountingEngine');
 
 // @desc    Get all expenses
 // @route   GET /api/expenses
@@ -111,6 +112,16 @@ const createExpense = async (req, res) => {
     const populatedExpense = await Expense.findById(expense._id)
       .populate('vendorId', 'name email')
       .populate('createdBy', 'firstName lastName');
+
+    // Create ledger entries automatically
+    try {
+      await AccountingEngine.createExpenseEntry(populatedExpense);
+      logger.info(`Created ledger entries for expense ${expense._id}`);
+    } catch (accountingError) {
+      // Log error but don't fail expense creation
+      // This allows expenses to be created even if COA isn't initialized yet
+      logger.warn(`Failed to create ledger entries for expense ${expense._id}:`, accountingError.message);
+    }
 
     // Emit webhook event
     eventEmitter.emitEvent('expense.created', populatedExpense.toObject(), req.user.tenantId);

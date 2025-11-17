@@ -5,6 +5,8 @@ const logger = require('../config/logger');
 const pdfService = require('../services/pdfService');
 const taxService = require('../services/taxService');
 const eventEmitter = require('../services/eventEmitter');
+const AccountingEngine = require('../services/accountingEngine');
+const WorkflowService = require('../services/workflowService');
 
 // @desc    Get all invoices
 // @route   GET /api/invoices
@@ -189,8 +191,36 @@ const createInvoice = async (req, res) => {
       .populate('customerId', 'name email')
       .populate('createdBy', 'firstName lastName');
 
+    // Create ledger entries automatically (only if status is SENT or PAID)
+    // For DRAFT invoices, we'll create entries when they're sent
+    if (invoice.status === 'SENT' || invoice.status === 'PAID') {
+      try {
+        await AccountingEngine.createInvoiceEntry(populatedInvoice);
+        logger.info(`Created ledger entries for invoice ${invoice.number}`);
+      } catch (accountingError) {
+        // Log error but don't fail invoice creation
+        // This allows invoices to be created even if COA isn't initialized yet
+        logger.warn(`Failed to create ledger entries for invoice ${invoice.number}:`, accountingError.message);
+      }
+    }
+
     // Emit webhook event
     eventEmitter.emitEvent('invoice.created', populatedInvoice.toObject(), req.user.tenantId);
+
+    // Execute workflows for invoice created
+    try {
+      await WorkflowService.executeWorkflows('INVOICE_CREATED', {
+        documentType: 'INVOICE',
+        documentId: invoice._id,
+        invoice: populatedInvoice.toObject(),
+        status: invoice.status,
+        amount: invoice.total,
+        customerId: invoice.customerId
+      }, req.user.tenantId);
+    } catch (workflowError) {
+      logger.warn('Workflow execution error:', workflowError);
+      // Don't fail invoice creation if workflow fails
+    }
 
     res.status(201).json({
       success: true,
@@ -306,11 +336,34 @@ const sendInvoice = async (req, res) => {
       });
     }
 
+    // Create ledger entries when invoice is sent (if not already created)
+    try {
+      await AccountingEngine.createInvoiceEntry(invoice);
+      logger.info(`Created ledger entries for invoice ${invoice.number}`);
+    } catch (accountingError) {
+      logger.warn(`Failed to create ledger entries for invoice ${invoice.number}:`, accountingError.message);
+      // Don't fail the send operation if accounting fails
+    }
+
     // TODO: Re-enable email sending when services are ready
     logger.info(`Invoice ${invoice.number} status updated to SENT`);
 
     // Emit webhook event
     eventEmitter.emitEvent('invoice.sent', invoice.toObject(), req.user.tenantId);
+
+    // Execute workflows for invoice sent
+    try {
+      await WorkflowService.executeWorkflows('INVOICE_SENT', {
+        documentType: 'INVOICE',
+        documentId: invoice._id,
+        invoice: invoice.toObject(),
+        status: 'SENT',
+        amount: invoice.total,
+        customerId: invoice.customerId
+      }, req.user.tenantId);
+    } catch (workflowError) {
+      logger.warn('Workflow execution error:', workflowError);
+    }
 
     res.status(200).json({
       success: true,

@@ -2,6 +2,7 @@ const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const Tenant = require('../models/Tenant');
 const logger = require('../config/logger');
+const AuditLogService = require('../services/auditLogService');
 
 // Generate JWT Token
 const generateToken = (id) => {
@@ -120,6 +121,9 @@ const login = async (req, res) => {
     // Update last login
     user.lastLogin = new Date();
     await user.save();
+
+    // Log successful login
+    await AuditLogService.logLogin(user, req.ip, req.get('user-agent'), true);
 
     // Generate token
     const token = generateToken(user._id);
