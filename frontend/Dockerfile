@@ -1,93 +1,58 @@
-# Use a Debian-based image for better compatibility with Next.js & SWC
+# Production-optimized Next.js Dockerfile for Coolify
 FROM node:20-bullseye AS builder
-
-# Force output to be unbuffered so logs appear immediately
-ENV PYTHONUNBUFFERED=1
-ENV NODE_OPTIONS="--max-old-space-size=4096"
 
 WORKDIR /app
 
-# Verify Dockerfile is being executed
-RUN echo "========================================" && \
-    echo "✅ Dockerfile is executing" && \
-    echo "========================================" && \
-    node --version && \
-    npm --version && \
-    pwd && \
-    ls -la || echo "Directory is empty"
-
-# 1) Increase Node memory for build
+# Set production environment
 ENV NODE_ENV=production
+ENV NODE_OPTIONS="--max-old-space-size=4096"
+ENV NEXT_TELEMETRY_DISABLED=1
 
-# 2) Build-time env vars with sensible defaults
-# Coolify can override these via "Build arguments"
-ARG NEXT_PUBLIC_API_URL=http://localhost:3001
-ARG NEXT_PUBLIC_APP_URL=http://localhost:3000
+# Build-time environment variables (Coolify can override via Build arguments)
+ARG NEXT_PUBLIC_API_URL
+ARG NEXT_PUBLIC_APP_URL
 
-# Expose them to Next.js at build time
+# Set build-time env vars (required for Next.js build)
 ENV NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
 ENV NEXT_PUBLIC_APP_URL=${NEXT_PUBLIC_APP_URL}
 
-# 3) Copy package manifests and install deps
+# Copy package files
 COPY package*.json ./
 
-# Optional: more verbose NPM logs to see issues
-ENV NPM_CONFIG_LOGLEVEL=info
+# Install ALL dependencies (including devDependencies needed for build)
+# Using npm ci for faster, reliable, reproducible builds
+RUN npm ci --legacy-peer-deps && \
+    npm cache clean --force
 
-RUN echo "========================================" && \
-    echo "📦 Installing dependencies..." && \
-    echo "Node version: $(node -v)" && \
-    echo "NPM version: $(npm -v)" && \
-    echo "Working directory: $(pwd)" && \
-    echo "Files before install:" && \
-    ls -la && \
-    echo "========================================" && \
-    npm install --legacy-peer-deps && \
-    echo "✅ Dependencies installed successfully" && \
-    echo "Files after install:" && \
-    ls -la node_modules 2>/dev/null | head -5 || echo "node_modules not found"
-
-# 4) Copy the rest of the app
+# Copy application source
 COPY . .
 
-# 5) Build the Next.js application with debug info
-RUN echo "========================================" && \
-    echo "🚀 Starting Next.js build..." && \
-    echo "NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}" && \
-    echo "NEXT_PUBLIC_APP_URL=${NEXT_PUBLIC_APP_URL}" && \
-    echo "NODE_ENV=${NODE_ENV}" && \
-    echo "NODE_OPTIONS=${NODE_OPTIONS}" && \
-    echo "========================================" && \
-    echo "Checking build script..." && \
-    cat package.json | grep -A 2 '"build"' && \
-    echo "Checking for next.config..." && \
-    ls -la next.config.* 2>/dev/null || echo "No next.config found" && \
-    echo "Checking src directory..." && \
-    ls -la src/ 2>/dev/null | head -10 || echo "src/ not found" && \
-    echo "========================================"
+# Build Next.js application
+RUN npm run build
 
-# Run build - capture all output
-RUN npm run build || (echo "=== BUILD FAILED ===" && npm run build 2>&1 && exit 1)
-
-# Verify build output
-RUN echo "✅ Build completed - verifying .next directory..." && \
-    ls -la .next || (echo "❌ .next directory not found!" && exit 1) && \
-    echo "✅ .next directory verified"
-
-# 6) Run stage (you can keep single-stage if you want)
-FROM node:20-bullseye AS runner
+# Production runner stage
+FROM node:20-bullseye-slim AS runner
 
 WORKDIR /app
+
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 
-# Copy built app from builder
-COPY --from=builder /app/package*.json ./
-COPY --from=builder /app/.next ./.next
+# Create non-root user for security
+RUN groupadd --system --gid 1001 nodejs && \
+    useradd --system --uid 1001 nextjs
+
+# Copy necessary files from builder
 COPY --from=builder /app/public ./public
-COPY --from=builder /app/node_modules ./node_modules
-COPY --from=builder /app/next.config.* ./ || true
+COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
+COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+
+USER nextjs
 
 EXPOSE 3000
 
-CMD ["npm", "start"]
+ENV PORT=3000
+ENV HOSTNAME="0.0.0.0"
+
+# Use Next.js standalone server
+CMD ["node", "server.js"]

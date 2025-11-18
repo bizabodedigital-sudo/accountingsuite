@@ -11,6 +11,8 @@ const nextConfig: NextConfig = {
   compress: true, // Enable gzip compression
   poweredByHeader: false, // Remove X-Powered-By header for security
   reactStrictMode: true, // Enable React strict mode
+  // Enable standalone output for optimized Docker builds
+  output: 'standalone',
 };
 
 export default nextConfig;
