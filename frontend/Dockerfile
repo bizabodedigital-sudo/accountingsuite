@@ -12,6 +12,9 @@ ENV NEXT_TELEMETRY_DISABLED=1
 ARG NEXT_PUBLIC_API_URL
 ARG NEXT_PUBLIC_APP_URL
 
+# Cache busting - increment this to force rebuild without cache
+ARG CACHE_BUST=2025-11-18-v2
+
 # Set build-time env vars (required for Next.js build)
 ENV NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
 ENV NEXT_PUBLIC_APP_URL=${NEXT_PUBLIC_APP_URL}
@@ -21,6 +24,7 @@ COPY package*.json ./
 
 # Install ALL dependencies (including devDependencies needed for build)
 # Using npm install (more forgiving than npm ci if lock file is out of sync)
+# Cache buster ensures this layer is rebuilt: ${CACHE_BUST}
 RUN npm install --legacy-peer-deps && \
     npm cache clean --force
 
