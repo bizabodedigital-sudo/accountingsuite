@@ -55,23 +55,20 @@ RUN echo "========================================" && \
     echo "========================================"
 
 # Build Next.js application with verbose output
-RUN echo "🚀 Starting Next.js build..." && \
-    npm run build 2>&1 || { \
-      echo "" && \
-      echo "========================================" && \
-      echo "❌ BUILD FAILED" && \
-      echo "========================================" && \
-      echo "Last 50 lines of build output:" && \
-      tail -50 /tmp/build.log 2>/dev/null || echo "No build log available" && \
-      echo "" && \
-      echo "Checking if .next directory exists:" && \
-      ls -la .next 2>/dev/null || echo ".next directory does not exist" && \
-      exit 1; \
-    } && \
-    echo "" && \
-    echo "✅ Build completed successfully!" && \
-    echo "Verifying .next directory:" && \
-    ls -la .next | head -10
+# Split into separate RUN commands so each step's output is visible
+RUN echo "========================================" && \
+    echo "🚀 STARTING NEXT.JS BUILD" && \
+    echo "========================================"
+
+# Run the build and capture output
+RUN npm run build
+
+# Verify build succeeded
+RUN echo "========================================" && \
+    echo "✅ BUILD COMPLETED - VERIFYING OUTPUT" && \
+    echo "========================================" && \
+    ls -la .next 2>/dev/null | head -15 || (echo "ERROR: .next directory not found!" && exit 1) && \
+    echo "Build verification complete!"
 
 # Production runner stage
 FROM node:20-bullseye-slim AS runner
