@@ -39,11 +39,49 @@ app.use(helmet());
 // ✅ Fixed CORS Configuration
 // ------------------------------
 const corsOptions = {
-  origin: [
-    'http://localhost:3000',
-    'http://127.0.0.1:3000',
-    process.env.FRONTEND_URL || 'http://localhost:3000',
-  ],
+  origin: function (origin, callback) {
+    // Allow requests with no origin (mobile apps, Postman, etc.)
+    if (!origin) return callback(null, true);
+    
+    const allowedOrigins = [
+      process.env.FRONTEND_URL,
+      process.env.NEXT_PUBLIC_APP_URL,
+    ].filter(Boolean); // Remove undefined values
+    
+    // In production, only allow configured origins
+    if (process.env.NODE_ENV === 'production') {
+      if (allowedOrigins.length === 0) {
+        return callback(new Error('FRONTEND_URL must be set in production'));
+      }
+      // Check if origin matches any allowed origin
+      const isAllowed = allowedOrigins.some(allowed => {
+        try {
+          const allowedUrl = new URL(allowed);
+          const originUrl = new URL(origin);
+          return allowedUrl.origin === originUrl.origin;
+        } catch {
+          return origin.startsWith(allowed);
+        }
+      });
+      return isAllowed ? callback(null, true) : callback(new Error('Not allowed by CORS'));
+    }
+    
+    // In development, allow localhost and configured origins
+    if (origin.startsWith('http://localhost:') || origin.startsWith('http://127.0.0.1:')) {
+      return callback(null, true);
+    }
+    
+    // In development, also check configured origins
+    if (allowedOrigins.length > 0) {
+      const isAllowed = allowedOrigins.some(allowed => origin.startsWith(allowed));
+      if (isAllowed) return callback(null, true);
+    }
+    
+    // Default: reject in production, allow in development
+    return process.env.NODE_ENV === 'production' 
+      ? callback(new Error('Not allowed by CORS'))
+      : callback(null, true);
+  },
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: [
     'Content-Type',

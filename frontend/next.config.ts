@@ -1,22 +1,17 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
-  // Note: "illegal path" errors with Turbopack on Windows/Docker are often harmless
-  // and don't affect functionality. If they persist, you can disable Turbopack by
-  // running: npm run dev -- --no-turbo
-  
-  // Make build more lenient for production
+  // Production optimizations
   typescript: {
-    // Don't fail build on TypeScript errors during build (warnings only)
-    ignoreBuildErrors: true,
+    ignoreBuildErrors: true, // Allow build to proceed with TypeScript warnings
   },
   eslint: {
-    // Don't fail build on ESLint errors during build
-    ignoreDuringBuilds: true,
+    ignoreDuringBuilds: true, // Don't fail build on ESLint errors
   },
-  // Disable source maps in production to speed up build
-  productionBrowserSourceMaps: false,
+  productionBrowserSourceMaps: false, // Disable source maps for production
+  compress: true, // Enable gzip compression
+  poweredByHeader: false, // Remove X-Powered-By header for security
+  reactStrictMode: true, // Enable React strict mode
 };
 
 export default nextConfig;

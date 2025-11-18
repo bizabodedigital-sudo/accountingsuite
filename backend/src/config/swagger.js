@@ -18,12 +18,8 @@ const options = {
     },
     servers: [
       {
-        url: process.env.API_URL || 'http://localhost:5000',
-        description: 'Development server'
-      },
-      {
-        url: 'https://api.bizabode.com',
-        description: 'Production server'
+        url: process.env.API_URL || process.env.FRONTEND_URL?.replace(':3000', ':3001') || 'http://localhost:3001',
+        description: process.env.NODE_ENV === 'production' ? 'Production server' : 'Development server'
       }
     ],
     components: {

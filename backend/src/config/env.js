@@ -7,6 +7,15 @@ const requiredEnvVars = [
   'PORT'
 ];
 
+// In production, FRONTEND_URL is required
+if (process.env.NODE_ENV === 'production') {
+  if (!process.env.FRONTEND_URL) {
+    logger.error('FRONTEND_URL is required in production environment');
+    process.exit(1);
+  }
+  requiredEnvVars.push('FRONTEND_URL');
+}
+
 const missingVars = requiredEnvVars.filter(varName => !process.env[varName]);
 
 if (missingVars.length > 0) {
