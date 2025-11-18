@@ -15,8 +15,6 @@ const nextConfig: NextConfig = {
     // Don't fail build on ESLint errors during build
     ignoreDuringBuilds: true,
   },
-  // Optimize output for production
-  output: 'standalone',
   // Disable source maps in production to speed up build
   productionBrowserSourceMaps: false,
 };
