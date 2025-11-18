@@ -57,15 +57,12 @@ RUN echo "========================================" && \
     echo "NEXT_PUBLIC_APP_URL=${NEXT_PUBLIC_APP_URL}" && \
     echo "NODE_ENV=${NODE_ENV}" && \
     echo "NODE_OPTIONS=${NODE_OPTIONS}" && \
-    echo "========================================"
-    
-RUN npm run build 2>&1 | tee /tmp/build.log || { \
-      echo "========================================" && \
-      echo "❌ BUILD FAILED - Full error output:" && \
-      cat /tmp/build.log 2>/dev/null || echo "No build log found" && \
-      echo "========================================" && \
-      exit 1; \
-    }
+    echo "========================================" && \
+    npm run build && \
+    echo "✅ Build completed successfully" && \
+    echo "Verifying .next directory exists..." && \
+    ls -la .next || (echo "❌ .next directory not found after build!" && exit 1) && \
+    echo "✅ .next directory verified"
 
 # 6) Run stage (you can keep single-stage if you want)
 FROM node:20-bullseye AS runner
