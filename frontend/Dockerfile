@@ -47,7 +47,15 @@ RUN echo "🔍 Environment check:" && \
     echo "Working directory: $(pwd)" && \
     node -e "console.log('✅ Node is working...')"
 
-# Run the build with full output
+# Pre-build checks
+RUN echo "🔍 Pre-build checks:" && \
+    echo "Next.js config exists: $(test -f next.config.ts && echo 'YES' || echo 'NO')" && \
+    echo "PostCSS config exists: $(test -f postcss.config.mjs && echo 'YES' || echo 'NO')" && \
+    echo "TypeScript config exists: $(test -f tsconfig.json && echo 'YES' || echo 'NO')" && \
+    echo "Package.json scripts:" && \
+    cat package.json | grep -A 3 '"scripts"'
+
+# Run the build - let Next.js output go directly to stdout/stderr
 RUN echo "🚀 Starting Next.js build..." && \
     npm run build
 
