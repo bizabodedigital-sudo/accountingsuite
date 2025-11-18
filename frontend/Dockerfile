@@ -1,10 +1,22 @@
 # Use a Debian-based image for better compatibility with Next.js & SWC
 FROM node:20-bullseye AS builder
 
+# Force output to be unbuffered so logs appear immediately
+ENV PYTHONUNBUFFERED=1
+ENV NODE_OPTIONS="--max-old-space-size=4096"
+
 WORKDIR /app
 
+# Verify Dockerfile is being executed
+RUN echo "========================================" && \
+    echo "✅ Dockerfile is executing" && \
+    echo "========================================" && \
+    node --version && \
+    npm --version && \
+    pwd && \
+    ls -la || echo "Directory is empty"
+
 # 1) Increase Node memory for build
-ENV NODE_OPTIONS="--max-old-space-size=4096"
 ENV NODE_ENV=production
 
 # 2) Build-time env vars with sensible defaults
@@ -22,18 +34,44 @@ COPY package*.json ./
 # Optional: more verbose NPM logs to see issues
 ENV NPM_CONFIG_LOGLEVEL=info
 
-RUN echo "📦 Installing dependencies..." && \
-    node -v && npm -v && \
-    npm install --legacy-peer-deps
+RUN echo "========================================" && \
+    echo "📦 Installing dependencies..." && \
+    echo "Node version: $(node -v)" && \
+    echo "NPM version: $(npm -v)" && \
+    echo "Working directory: $(pwd)" && \
+    echo "Files before install:" && \
+    ls -la && \
+    echo "========================================" && \
+    npm install --legacy-peer-deps && \
+    echo "✅ Dependencies installed successfully" && \
+    echo "Files after install:" && \
+    ls -la node_modules 2>/dev/null | head -5 || echo "node_modules not found"
 
 # 4) Copy the rest of the app
 COPY . .
 
 # 5) Build the Next.js application with debug info
-RUN echo "🚀 Starting Next.js build..." && \
+RUN echo "========================================" && \
+    echo "🚀 Starting Next.js build..." && \
     echo "NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}" && \
     echo "NEXT_PUBLIC_APP_URL=${NEXT_PUBLIC_APP_URL}" && \
-    npm run build
+    echo "NODE_ENV=${NODE_ENV}" && \
+    echo "NODE_OPTIONS=${NODE_OPTIONS}" && \
+    echo "Files in app directory:" && \
+    ls -la | head -10 && \
+    echo "Checking for next.config:" && \
+    ls -la next.config.* 2>/dev/null || echo "No next.config found" && \
+    echo "Checking for src directory:" && \
+    ls -la src/ 2>/dev/null | head -5 || echo "src/ not found" && \
+    echo "========================================" && \
+    npm run build || \
+    (echo "========================================" && \
+     echo "❌ BUILD FAILED" && \
+     echo "Checking for error details..." && \
+     ls -la .next 2>/dev/null || echo "No .next directory" && \
+     cat package.json | grep -A 3 '"build"' && \
+     echo "========================================" && \
+     exit 1)
 
 # 6) Run stage (you can keep single-stage if you want)
 FROM node:20-bullseye AS runner
