@@ -23,6 +23,25 @@ ENV NEXT_PUBLIC_APP_URL=${NEXT_PUBLIC_APP_URL}
 # Copy package files
 COPY package*.json ./
 
+# Debug: Print Node version and environment before npm install
+RUN echo "========================================" && \
+    echo "🔍 DEBUG: PRE-INSTALL DIAGNOSTICS" && \
+    echo "========================================" && \
+    echo "Node.js version: $(node --version)" && \
+    echo "NPM version: $(npm --version)" && \
+    echo "Working directory: $(pwd)" && \
+    echo "" && \
+    echo "Environment variables:" && \
+    echo "  NODE_ENV: $NODE_ENV" && \
+    echo "  NODE_OPTIONS: $NODE_OPTIONS" && \
+    echo "  NEXT_PUBLIC_API_URL: $NEXT_PUBLIC_API_URL" && \
+    echo "  NEXT_PUBLIC_APP_URL: $NEXT_PUBLIC_APP_URL" && \
+    echo "  NEXT_TELEMETRY_DISABLED: $NEXT_TELEMETRY_DISABLED" && \
+    echo "" && \
+    echo "Package files:" && \
+    ls -la package*.json && \
+    echo "========================================"
+
 # Install ALL dependencies (including devDependencies needed for build)
 # Using npm install (more forgiving than npm ci if lock file is out of sync)
 # Cache buster ensures this layer is rebuilt: ${CACHE_BUST}
@@ -53,6 +72,28 @@ RUN echo "========================================" && \
     echo "" && \
     echo "Build script:" && \
     cat package.json | grep -A 2 '"build"' && \
+    echo "========================================"
+
+# Debug: Print Node version and environment before npm run build
+RUN echo "========================================" && \
+    echo "🔍 DEBUG: PRE-BUILD DIAGNOSTICS" && \
+    echo "========================================" && \
+    echo "Node.js version: $(node --version)" && \
+    echo "NPM version: $(npm --version)" && \
+    echo "Working directory: $(pwd)" && \
+    echo "" && \
+    echo "Environment variables:" && \
+    echo "  NODE_ENV: $NODE_ENV" && \
+    echo "  NODE_OPTIONS: $NODE_OPTIONS" && \
+    echo "  NEXT_PUBLIC_API_URL: $NEXT_PUBLIC_API_URL" && \
+    echo "  NEXT_PUBLIC_APP_URL: $NEXT_PUBLIC_APP_URL" && \
+    echo "  NEXT_TELEMETRY_DISABLED: $NEXT_TELEMETRY_DISABLED" && \
+    echo "" && \
+    echo "Available memory:" && \
+    free -h 2>/dev/null || echo "Memory info not available" && \
+    echo "" && \
+    echo "Disk space:" && \
+    df -h . 2>/dev/null || echo "Disk info not available" && \
     echo "========================================"
 
 # Build Next.js application with verbose output
