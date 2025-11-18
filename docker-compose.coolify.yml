@@ -49,7 +49,7 @@ services:
     networks:
       - bizabode-network
     healthcheck:
-      test: ["CMD", "mc", "ready", "local"]
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/ready"]
       interval: 30s
       timeout: 10s
       retries: 5
@@ -144,7 +144,7 @@ services:
     restart: unless-stopped
     environment:
       NODE_ENV: ${NODE_ENV:-production}
-      MONGODB_URI: ${MONGODB_URI}
+      MONGODB_URI: ${MONGODB_URI:-mongodb://mongo:27017/bizabode}
       REDIS_URL: ${REDIS_URL:-redis://redis:6379}
       JWT_SECRET: ${JWT_SECRET}
       # S3 Configuration
@@ -176,4 +176,5 @@ volumes:
 networks:
   bizabode-network:
     driver: bridge
+
 
