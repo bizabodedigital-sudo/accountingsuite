@@ -9,11 +9,12 @@ ENV NODE_OPTIONS="--max-old-space-size=4096"
 ENV NEXT_TELEMETRY_DISABLED=1
 
 # Build-time environment variables (Coolify can override via Build arguments)
-ARG NEXT_PUBLIC_API_URL
-ARG NEXT_PUBLIC_APP_URL
+# Provide defaults to prevent build failures if not set
+ARG NEXT_PUBLIC_API_URL=http://localhost:3001
+ARG NEXT_PUBLIC_APP_URL=http://localhost:3000
 
 # Cache busting - increment this to force rebuild without cache
-ARG CACHE_BUST=2025-11-18-v2
+ARG CACHE_BUST=2025-11-18-v3
 
 # Set build-time env vars (required for Next.js build)
 ENV NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
