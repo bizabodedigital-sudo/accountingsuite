@@ -20,7 +20,9 @@ ENV NODE_ENV=production
 # Build the Next.js application
 # Increase Node memory limit for build process
 ENV NODE_OPTIONS="--max-old-space-size=4096"
-RUN npm run build
+# Install build dependencies and run build
+RUN apk add --no-cache bash || true
+RUN npm run build || (echo "Build failed - checking for error details..." && ls -la .next 2>/dev/null || true && exit 1)
 
 # Expose the port Next.js runs on
 EXPOSE 3000
