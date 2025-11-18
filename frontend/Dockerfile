@@ -20,8 +20,8 @@ ENV NEXT_PUBLIC_APP_URL=${NEXT_PUBLIC_APP_URL}
 COPY package*.json ./
 
 # Install ALL dependencies (including devDependencies needed for build)
-# Using npm ci for faster, reliable, reproducible builds
-RUN npm ci --legacy-peer-deps && \
+# Using npm install (more forgiving than npm ci if lock file is out of sync)
+RUN npm install --legacy-peer-deps && \
     npm cache clean --force
 
 # Copy application source
