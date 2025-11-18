@@ -47,9 +47,11 @@ RUN groupadd --system --gid 1001 nodejs && \
     useradd --system --uid 1001 nextjs
 
 # Copy necessary files from builder
+COPY --from=builder /app/package*.json ./
 COPY --from=builder /app/public ./public
-COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
-COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+COPY --from=builder --chown=nextjs:nodejs /app/.next ./.next
+COPY --from=builder --chown=nextjs:nodejs /app/node_modules ./node_modules
+COPY --from=builder --chown=nextjs:nodejs /app/next.config.* ./ || true
 
 USER nextjs
 
@@ -58,5 +60,5 @@ EXPOSE 3000
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
 
-# Use Next.js standalone server
-CMD ["node", "server.js"]
+# Use npm start (more forgiving than standalone mode)
+CMD ["npm", "start"]
