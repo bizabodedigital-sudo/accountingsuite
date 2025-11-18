@@ -57,11 +57,14 @@ RUN echo "========================================" && \
     echo "NEXT_PUBLIC_APP_URL=${NEXT_PUBLIC_APP_URL}" && \
     echo "NODE_ENV=${NODE_ENV}" && \
     echo "NODE_OPTIONS=${NODE_OPTIONS}" && \
-    echo "========================================" && \
-    npm run build && \
-    echo "✅ Build completed successfully" && \
-    echo "Verifying .next directory exists..." && \
-    ls -la .next || (echo "❌ .next directory not found after build!" && exit 1) && \
+    echo "========================================"
+
+# Run build in separate step to see actual errors
+RUN npm run build
+
+# Verify build output
+RUN echo "✅ Build completed - verifying .next directory..." && \
+    ls -la .next || (echo "❌ .next directory not found!" && exit 1) && \
     echo "✅ .next directory verified"
 
 # 6) Run stage (you can keep single-stage if you want)
