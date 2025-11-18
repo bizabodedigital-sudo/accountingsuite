@@ -57,10 +57,17 @@ RUN echo "========================================" && \
     echo "NEXT_PUBLIC_APP_URL=${NEXT_PUBLIC_APP_URL}" && \
     echo "NODE_ENV=${NODE_ENV}" && \
     echo "NODE_OPTIONS=${NODE_OPTIONS}" && \
+    echo "========================================" && \
+    echo "Checking build script..." && \
+    cat package.json | grep -A 2 '"build"' && \
+    echo "Checking for next.config..." && \
+    ls -la next.config.* 2>/dev/null || echo "No next.config found" && \
+    echo "Checking src directory..." && \
+    ls -la src/ 2>/dev/null | head -10 || echo "src/ not found" && \
     echo "========================================"
 
-# Run build in separate step to see actual errors
-RUN npm run build
+# Run build - capture all output
+RUN npm run build || (echo "=== BUILD FAILED ===" && npm run build 2>&1 && exit 1)
 
 # Verify build output
 RUN echo "✅ Build completed - verifying .next directory..." && \
