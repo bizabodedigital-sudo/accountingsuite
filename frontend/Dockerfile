@@ -31,18 +31,47 @@ RUN npm install --legacy-peer-deps && \
 # Copy application source
 COPY . .
 
-# Build Next.js application with error capture
-RUN npm run build 2>&1 | tee /tmp/build.log || { \
+# Pre-build diagnostics
+RUN echo "========================================" && \
+    echo "🔍 PRE-BUILD DIAGNOSTICS" && \
+    echo "========================================" && \
+    echo "Files in app directory:" && \
+    ls -la | head -15 && \
+    echo "" && \
+    echo "Checking for critical files:" && \
+    echo "  next.config.ts: $(test -f next.config.ts && echo '✅' || echo '❌')" && \
+    echo "  package.json: $(test -f package.json && echo '✅' || echo '❌')" && \
+    echo "  src/ directory: $(test -d src && echo '✅' || echo '❌')" && \
+    echo "  public/ directory: $(test -d public && echo '✅' || echo '❌')" && \
+    echo "" && \
+    echo "Environment variables:" && \
+    echo "  NODE_ENV: $NODE_ENV" && \
+    echo "  NEXT_PUBLIC_API_URL: $NEXT_PUBLIC_API_URL" && \
+    echo "  NEXT_PUBLIC_APP_URL: $NEXT_PUBLIC_APP_URL" && \
+    echo "  NODE_OPTIONS: $NODE_OPTIONS" && \
+    echo "" && \
+    echo "Build script:" && \
+    cat package.json | grep -A 2 '"build"' && \
+    echo "========================================"
+
+# Build Next.js application with verbose output
+RUN echo "🚀 Starting Next.js build..." && \
+    npm run build 2>&1 || { \
+      echo "" && \
       echo "========================================" && \
-      echo "❌ BUILD FAILED - Full error output:" && \
-      cat /tmp/build.log 2>/dev/null || echo "No build log found" && \
+      echo "❌ BUILD FAILED" && \
       echo "========================================" && \
-      echo "Checking .next directory:" && \
+      echo "Last 50 lines of build output:" && \
+      tail -50 /tmp/build.log 2>/dev/null || echo "No build log available" && \
+      echo "" && \
+      echo "Checking if .next directory exists:" && \
       ls -la .next 2>/dev/null || echo ".next directory does not exist" && \
-      echo "Checking package.json build script:" && \
-      cat package.json | grep -A 3 '"build"' && \
       exit 1; \
-    }
+    } && \
+    echo "" && \
+    echo "✅ Build completed successfully!" && \
+    echo "Verifying .next directory:" && \
+    ls -la .next | head -10
 
 # Production runner stage
 FROM node:20-bullseye-slim AS runner
