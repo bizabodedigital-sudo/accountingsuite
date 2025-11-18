@@ -20,7 +20,10 @@ ENV NODE_ENV=production
 # Build the Next.js application
 # Increase Node memory limit for build process
 ENV NODE_OPTIONS="--max-old-space-size=4096"
-RUN npm run build
+# Run build - errors will be visible in build logs
+# Using standalone output mode for optimized production build
+RUN echo "Starting Next.js build with standalone output..." && \
+    npm run build
 
 # Expose the port Next.js runs on
 EXPOSE 3000
