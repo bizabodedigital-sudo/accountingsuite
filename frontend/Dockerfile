@@ -57,24 +57,15 @@ RUN echo "========================================" && \
     echo "NEXT_PUBLIC_APP_URL=${NEXT_PUBLIC_APP_URL}" && \
     echo "NODE_ENV=${NODE_ENV}" && \
     echo "NODE_OPTIONS=${NODE_OPTIONS}" && \
-    echo "Files in app directory:" && \
-    ls -la | head -10 && \
-    echo "Checking for next.config:" && \
-    ls -la next.config.* 2>/dev/null || echo "No next.config found" && \
-    echo "Checking for src directory:" && \
-    ls -la src/ 2>/dev/null | head -5 || echo "src/ not found" && \
-    echo "========================================" && \
-    npm run build || ( \
+    echo "========================================"
+    
+RUN npm run build 2>&1 | tee /tmp/build.log || { \
       echo "========================================" && \
-      echo "❌ BUILD FAILED" && \
-      echo "=== npm build failed, dumping logs ===" && \
-      find ~/.npm/_logs -type f -maxdepth 1 -print -exec cat {} \; 2>/dev/null || echo "No npm logs found" && \
-      echo "Checking for error details..." && \
-      ls -la .next 2>/dev/null || echo "No .next directory" && \
-      cat package.json | grep -A 3 '"build"' && \
+      echo "❌ BUILD FAILED - Full error output:" && \
+      cat /tmp/build.log 2>/dev/null || echo "No build log found" && \
       echo "========================================" && \
-      exit 1 \
-    )
+      exit 1; \
+    }
 
 # 6) Run stage (you can keep single-stage if you want)
 FROM node:20-bullseye AS runner

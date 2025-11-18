@@ -20,7 +20,7 @@ import {
   FileText,
   X,
 } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { invoiceAPI, customerAPI, productAPI } from '@/lib/api';
 import { useRouter, useSearchParams } from 'next/navigation';
 import InvoicePreview from '@/components/InvoicePreview';
@@ -56,7 +56,7 @@ interface Product {
   unit: string;
 }
 
-export default function CreateInvoicePage() {
+function CreateInvoicePageContent() {
   const { user, tenant, isLoading, isAuthenticated } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -967,5 +967,20 @@ export default function CreateInvoicePage() {
         />
       )}
     </div>
+  );
+}
+
+export default function CreateInvoicePage() {
+  return (
+    <Suspense fallback={
+      <div className="h-full flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-600 dark:text-gray-400">Loading...</p>
+        </div>
+      </div>
+    }>
+      <CreateInvoicePageContent />
+    </Suspense>
   );
 }

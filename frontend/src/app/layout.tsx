@@ -1,17 +1,13 @@
 import type { Metadata } from 'next'
-import { Inter } from 'next/font/google'
 import './globals.css'
 import { AuthProvider } from '@/contexts/AuthContext'
 import { ThemeProvider } from '@/contexts/ThemeContext'
 import Sidebar from '@/components/Sidebar'
 import QuickActionButton from '@/components/QuickActionButton'
 
-// Load Inter font with fallback handling for build environments without internet
-const inter = Inter({ 
-  subsets: ['latin'],
-  display: 'swap',
-  fallback: ['system-ui', 'arial']
-})
+// Use system fonts instead of Google Fonts to avoid build-time network issues
+// Inter-like font stack that works offline
+const fontClass = 'font-sans'
 
 export const metadata: Metadata = {
   title: 'Bizabode Accounting Suite',
@@ -25,7 +21,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className="h-full" suppressHydrationWarning>
-      <body className={`${inter.className} h-full overflow-hidden`} suppressHydrationWarning={true}>
+      <body className={`${fontClass} h-full overflow-hidden`} suppressHydrationWarning={true}>
         <ThemeProvider>
           <AuthProvider>
             <div className="h-full bg-gray-50 dark:bg-gray-900 flex transition-colors">

@@ -6,7 +6,7 @@ import { ModernCard } from '@/components/ui/modern-card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { 
   DollarSign, 
@@ -17,7 +17,7 @@ import {
 } from 'lucide-react';
 import { payrollAPI, employeeAPI } from '@/lib/api';
 
-export default function CreatePayrollPage() {
+function CreatePayrollPageContent() {
   const { user, isLoading, isAuthenticated } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -513,6 +513,21 @@ export default function CreatePayrollPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function CreatePayrollPage() {
+  return (
+    <Suspense fallback={
+      <div className="h-full flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-600 dark:text-gray-400">Loading...</p>
+        </div>
+      </div>
+    }>
+      <CreatePayrollPageContent />
+    </Suspense>
   );
 }
 
