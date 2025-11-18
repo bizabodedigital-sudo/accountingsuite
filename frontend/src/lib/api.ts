@@ -1,7 +1,11 @@
 import axios from 'axios';
 
 // API base URL - must be set via NEXT_PUBLIC_API_URL environment variable in production
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || (typeof window !== 'undefined' ? window.location.origin.replace(':3000', ':3001') : '');
+// During build, use a fallback to prevent build errors
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 
+  (typeof window !== 'undefined' 
+    ? window.location.origin.replace(':3000', ':3001') 
+    : 'http://localhost:3001');
 
 // Create axios instance
 const api = axios.create({

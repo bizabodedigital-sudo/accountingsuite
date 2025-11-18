@@ -19,6 +19,7 @@ ENV NODE_ENV=production
 
 # Build the Next.js application
 ENV NODE_OPTIONS="--max-old-space-size=4096"
+# Run build - errors will be visible in logs
 RUN npm run build
 
 # Expose port
