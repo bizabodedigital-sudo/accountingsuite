@@ -6,7 +6,12 @@ import { ThemeProvider } from '@/contexts/ThemeContext'
 import Sidebar from '@/components/Sidebar'
 import QuickActionButton from '@/components/QuickActionButton'
 
-const inter = Inter({ subsets: ['latin'] })
+// Load Inter font with fallback handling for build environments without internet
+const inter = Inter({ 
+  subsets: ['latin'],
+  display: 'swap',
+  fallback: ['system-ui', 'arial']
+})
 
 export const metadata: Metadata = {
   title: 'Bizabode Accounting Suite',

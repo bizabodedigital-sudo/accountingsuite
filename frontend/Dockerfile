@@ -64,14 +64,17 @@ RUN echo "========================================" && \
     echo "Checking for src directory:" && \
     ls -la src/ 2>/dev/null | head -5 || echo "src/ not found" && \
     echo "========================================" && \
-    npm run build || \
-    (echo "========================================" && \
-     echo "❌ BUILD FAILED" && \
-     echo "Checking for error details..." && \
-     ls -la .next 2>/dev/null || echo "No .next directory" && \
-     cat package.json | grep -A 3 '"build"' && \
-     echo "========================================" && \
-     exit 1)
+    npm run build || ( \
+      echo "========================================" && \
+      echo "❌ BUILD FAILED" && \
+      echo "=== npm build failed, dumping logs ===" && \
+      find ~/.npm/_logs -type f -maxdepth 1 -print -exec cat {} \; 2>/dev/null || echo "No npm logs found" && \
+      echo "Checking for error details..." && \
+      ls -la .next 2>/dev/null || echo "No .next directory" && \
+      cat package.json | grep -A 3 '"build"' && \
+      echo "========================================" && \
+      exit 1 \
+    )
 
 # 6) Run stage (you can keep single-stage if you want)
 FROM node:20-bullseye AS runner

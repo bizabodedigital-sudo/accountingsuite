@@ -5,9 +5,8 @@ const nextConfig: NextConfig = {
   typescript: {
     ignoreBuildErrors: true, // Allow build to proceed with TypeScript warnings
   },
-  eslint: {
-    ignoreDuringBuilds: true, // Don't fail build on ESLint errors
-  },
+  // Note: eslint config moved to next.config.ts is deprecated in Next.js 16
+  // Use .eslintrc.json or eslint.config.js instead
   productionBrowserSourceMaps: false, // Disable source maps for production
   compress: true, // Enable gzip compression
   poweredByHeader: false, // Remove X-Powered-By header for security

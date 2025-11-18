@@ -15,7 +15,7 @@ import {
   Loader2,
   CreditCard,
 } from 'lucide-react';
-import { PaymentGatewayModal } from '@/components/PaymentGatewayModal';
+import PaymentGatewayModal from '@/components/PaymentGatewayModal';
 
 export default function ClientPortalInvoiceDetailPage() {
   const router = useRouter();
