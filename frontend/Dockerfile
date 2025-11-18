@@ -47,13 +47,36 @@ RUN echo "🔍 Environment check:" && \
     echo "Working directory: $(pwd)" && \
     node -e "console.log('✅ Node is working...')"
 
-# Pre-build checks
-RUN echo "🔍 Pre-build checks:" && \
-    echo "Next.js config exists: $(test -f next.config.ts && echo 'YES' || echo 'NO')" && \
-    echo "PostCSS config exists: $(test -f postcss.config.mjs && echo 'YES' || echo 'NO')" && \
-    echo "TypeScript config exists: $(test -f tsconfig.json && echo 'YES' || echo 'NO')" && \
-    echo "Package.json scripts:" && \
-    cat package.json | grep -A 3 '"scripts"'
+# Comprehensive pre-build diagnostic checks
+RUN echo "🔍 === PRE-BUILD DIAGNOSTICS ===" && \
+    echo "" && \
+    echo "📋 Configuration Files:" && \
+    echo "  Next.js config: $(test -f next.config.ts && echo '✅ YES' || echo '❌ NO')" && \
+    echo "  PostCSS config: $(test -f postcss.config.mjs && echo '✅ YES' || echo '❌ NO')" && \
+    echo "  TypeScript config: $(test -f tsconfig.json && echo '✅ YES' || echo '❌ NO')" && \
+    echo "  Package.json: $(test -f package.json && echo '✅ YES' || echo '❌ NO')" && \
+    echo "" && \
+    echo "📦 Dependencies Check:" && \
+    echo "  Next.js installed: $(test -d node_modules/next && echo '✅ YES' || echo '❌ NO')" && \
+    echo "  React installed: $(test -d node_modules/react && echo '✅ YES' || echo '❌ NO')" && \
+    echo "  TypeScript installed: $(test -d node_modules/typescript && echo '✅ YES' || echo '❌ NO')" && \
+    echo "  Tailwind installed: $(test -d node_modules/tailwindcss && echo '✅ YES' || echo '❌ NO')" && \
+    echo "" && \
+    echo "📁 Critical Directories:" && \
+    echo "  src/ exists: $(test -d src && echo '✅ YES' || echo '❌ NO')" && \
+    echo "  src/app/ exists: $(test -d src/app && echo '✅ YES' || echo '❌ NO')" && \
+    echo "  public/ exists: $(test -d public && echo '✅ YES' || echo '❌ NO')" && \
+    echo "" && \
+    echo "🔧 Build Script:" && \
+    cat package.json | grep -A 5 '"scripts"' && \
+    echo "" && \
+    echo "🌍 Environment Variables:" && \
+    echo "  NODE_ENV: $NODE_ENV" && \
+    echo "  NEXT_PUBLIC_API_URL: $NEXT_PUBLIC_API_URL" && \
+    echo "  NEXT_PUBLIC_APP_URL: $NEXT_PUBLIC_APP_URL" && \
+    echo "  NODE_OPTIONS: $NODE_OPTIONS" && \
+    echo "" && \
+    echo "✅ Pre-build checks complete"
 
 # Run the build - let Next.js output go directly to stdout/stderr
 RUN echo "🚀 Starting Next.js build..." && \
