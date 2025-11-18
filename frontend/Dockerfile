@@ -1,31 +1,30 @@
 # Production-optimized Next.js Dockerfile for Coolify
+# Uses Node 20 to match local development environment
 FROM node:20-bullseye AS builder
 
 WORKDIR /app
 
-# Set production environment
+# Build-time environment variables (Coolify can override via Build arguments)
+# These MUST be set as ARG before ENV for Next.js to see them at build time
+ARG NEXT_PUBLIC_API_URL=http://localhost:3001
+ARG NEXT_PUBLIC_APP_URL=http://localhost:3000
+
+# Set build-time env vars (required for Next.js build)
+# Next.js embeds NEXT_PUBLIC_* vars at build time, so they must be available during npm run build
+ENV NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
+ENV NEXT_PUBLIC_APP_URL=${NEXT_PUBLIC_APP_URL}
+
+# Production environment settings
 ENV NODE_ENV=production
 ENV NODE_OPTIONS="--max-old-space-size=4096"
 ENV NEXT_TELEMETRY_DISABLED=1
 
-# Build-time environment variables (Coolify can override via Build arguments)
-# Provide defaults to prevent build failures if not set
-ARG NEXT_PUBLIC_API_URL=http://localhost:3001
-ARG NEXT_PUBLIC_APP_URL=http://localhost:3000
-
-# Cache busting - increment this to force rebuild without cache
-ARG CACHE_BUST=2025-11-18-v3
-
-# Set build-time env vars (required for Next.js build)
-ENV NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
-ENV NEXT_PUBLIC_APP_URL=${NEXT_PUBLIC_APP_URL}
-
-# Copy package files
+# Copy package files first (for better Docker layer caching)
 COPY package*.json ./
 
-# Debug: Print Node version and environment before npm install
+# Debug: Print Node/NPM versions and environment BEFORE npm install
 RUN echo "========================================" && \
-    echo "🔍 DEBUG: PRE-INSTALL DIAGNOSTICS" && \
+    echo "🔍 PRE-INSTALL DIAGNOSTICS" && \
     echo "========================================" && \
     echo "Node.js version: $(node --version)" && \
     echo "NPM version: $(npm --version)" && \
@@ -38,45 +37,23 @@ RUN echo "========================================" && \
     echo "  NEXT_PUBLIC_APP_URL: $NEXT_PUBLIC_APP_URL" && \
     echo "  NEXT_TELEMETRY_DISABLED: $NEXT_TELEMETRY_DISABLED" && \
     echo "" && \
-    echo "Package files:" && \
+    echo "Package files present:" && \
     ls -la package*.json && \
     echo "========================================"
 
 # Install ALL dependencies (including devDependencies needed for build)
-# Using npm install (more forgiving than npm ci if lock file is out of sync)
-# Cache buster ensures this layer is rebuilt: ${CACHE_BUST}
+# CRITICAL: Do NOT use --only=production or --omit=dev here!
+# Next.js build requires devDependencies like TypeScript, Tailwind, etc.
 RUN npm install --legacy-peer-deps && \
-    npm cache clean --force
+    npm cache clean --force && \
+    echo "✅ Dependencies installed successfully"
 
-# Copy application source
+# Copy application source code
 COPY . .
 
-# Pre-build diagnostics
+# Debug: Print Node/NPM versions and environment BEFORE npm run build
 RUN echo "========================================" && \
     echo "🔍 PRE-BUILD DIAGNOSTICS" && \
-    echo "========================================" && \
-    echo "Files in app directory:" && \
-    ls -la | head -15 && \
-    echo "" && \
-    echo "Checking for critical files:" && \
-    echo "  next.config.ts: $(test -f next.config.ts && echo '✅' || echo '❌')" && \
-    echo "  package.json: $(test -f package.json && echo '✅' || echo '❌')" && \
-    echo "  src/ directory: $(test -d src && echo '✅' || echo '❌')" && \
-    echo "  public/ directory: $(test -d public && echo '✅' || echo '❌')" && \
-    echo "" && \
-    echo "Environment variables:" && \
-    echo "  NODE_ENV: $NODE_ENV" && \
-    echo "  NEXT_PUBLIC_API_URL: $NEXT_PUBLIC_API_URL" && \
-    echo "  NEXT_PUBLIC_APP_URL: $NEXT_PUBLIC_APP_URL" && \
-    echo "  NODE_OPTIONS: $NODE_OPTIONS" && \
-    echo "" && \
-    echo "Build script:" && \
-    cat package.json | grep -A 2 '"build"' && \
-    echo "========================================"
-
-# Debug: Print Node version and environment before npm run build
-RUN echo "========================================" && \
-    echo "🔍 DEBUG: PRE-BUILD DIAGNOSTICS" && \
     echo "========================================" && \
     echo "Node.js version: $(node --version)" && \
     echo "NPM version: $(npm --version)" && \
@@ -89,23 +66,47 @@ RUN echo "========================================" && \
     echo "  NEXT_PUBLIC_APP_URL: $NEXT_PUBLIC_APP_URL" && \
     echo "  NEXT_TELEMETRY_DISABLED: $NEXT_TELEMETRY_DISABLED" && \
     echo "" && \
+    echo "Critical files check:" && \
+    echo "  next.config.ts: $(test -f next.config.ts && echo '✅ EXISTS' || echo '❌ MISSING')" && \
+    echo "  package.json: $(test -f package.json && echo '✅ EXISTS' || echo '❌ MISSING')" && \
+    echo "  src/ directory: $(test -d src && echo '✅ EXISTS' || echo '❌ MISSING')" && \
+    echo "  public/ directory: $(test -d public && echo '✅ EXISTS' || echo '❌ MISSING')" && \
+    echo "" && \
+    echo "Build script from package.json:" && \
+    cat package.json | grep -A 3 '"build"' && \
+    echo "" && \
     echo "Available memory:" && \
-    free -h 2>/dev/null || echo "Memory info not available" && \
+    free -h 2>/dev/null || echo "Memory info not available (this is normal)" && \
     echo "" && \
     echo "Disk space:" && \
-    df -h . 2>/dev/null || echo "Disk info not available" && \
+    df -h . 2>/dev/null || echo "Disk info not available (this is normal)" && \
     echo "========================================"
 
-# Build Next.js application with verbose output
-# Split into separate RUN commands so each step's output is visible
+# Build Next.js application
+# Run in separate step so we can see the actual error if it fails
 RUN echo "========================================" && \
     echo "🚀 STARTING NEXT.JS BUILD" && \
-    echo "========================================"
+    echo "========================================" && \
+    npm run build || { \
+      echo "" && \
+      echo "========================================" && \
+      echo "❌ BUILD FAILED - ERROR DETAILS" && \
+      echo "========================================" && \
+      echo "The npm run build command failed with exit code 1." && \
+      echo "Check the output above for the actual Next.js error message." && \
+      echo "" && \
+      echo "Common causes:" && \
+      echo "  - Missing or incorrect NEXT_PUBLIC_* environment variables" && \
+      echo "  - TypeScript compilation errors" && \
+      echo "  - Missing dependencies" && \
+      echo "  - Insufficient memory" && \
+      echo "" && \
+      echo "Checking if .next directory was created:" && \
+      ls -la .next 2>/dev/null || echo ".next directory does not exist (build failed early)" && \
+      exit 1; \
+    }
 
-# Run the build and capture output
-RUN npm run build
-
-# Verify build succeeded
+# Verify build output
 RUN echo "========================================" && \
     echo "✅ BUILD COMPLETED - VERIFYING OUTPUT" && \
     echo "========================================" && \
