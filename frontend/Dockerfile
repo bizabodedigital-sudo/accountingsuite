@@ -31,8 +31,18 @@ RUN npm install --legacy-peer-deps && \
 # Copy application source
 COPY . .
 
-# Build Next.js application
-RUN npm run build
+# Build Next.js application with error capture
+RUN npm run build 2>&1 | tee /tmp/build.log || { \
+      echo "========================================" && \
+      echo "❌ BUILD FAILED - Full error output:" && \
+      cat /tmp/build.log 2>/dev/null || echo "No build log found" && \
+      echo "========================================" && \
+      echo "Checking .next directory:" && \
+      ls -la .next 2>/dev/null || echo ".next directory does not exist" && \
+      echo "Checking package.json build script:" && \
+      cat package.json | grep -A 3 '"build"' && \
+      exit 1; \
+    }
 
 # Production runner stage
 FROM node:20-bullseye-slim AS runner
