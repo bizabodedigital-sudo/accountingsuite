@@ -1,6 +1,6 @@
 # Production-optimized Next.js Dockerfile for Coolify
-# Uses Node 20 to match local development environment
-FROM node:20-bullseye AS builder
+# Uses Node 22 to match local development environment (v22.16.0)
+FROM node:22-bullseye AS builder
 
 WORKDIR /app
 
@@ -114,7 +114,7 @@ RUN echo "========================================" && \
     echo "Build verification complete!"
 
 # Production runner stage
-FROM node:20-bullseye-slim AS runner
+FROM node:22-bullseye-slim AS runner
 
 WORKDIR /app
 
