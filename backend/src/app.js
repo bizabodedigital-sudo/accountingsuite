@@ -119,9 +119,13 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.get('/healthz', (req, res) => {
   const mongoose = require('mongoose');
   const mongoStatus = mongoose.connection.readyState === 1 ? 'connected' : 'disconnected';
-  res.status(200).json({
-    success: true,
-    message: 'Server is healthy',
+  const isHealthy = mongoStatus === 'connected';
+  
+  // Return 503 (Service Unavailable) if MongoDB is disconnected
+  // This makes Docker healthcheck fail when database is not connected
+  res.status(isHealthy ? 200 : 503).json({
+    success: isHealthy,
+    message: isHealthy ? 'Server is healthy' : 'Server is unhealthy - MongoDB disconnected',
     mongo: mongoStatus,
     timestamp: new Date().toISOString(),
   });
