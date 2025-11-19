@@ -79,7 +79,7 @@ services:
       REDIS_URL: ${REDIS_URL:-redis://redis:6379}
       JWT_SECRET: ${JWT_SECRET:-SgrLvV/iBtpTYIDS4jOabnzND7TykHcl/Do54gQnKPQ=}
       JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-24h}
-      FRONTEND_URL: ${FRONTEND_URL:-}
+      FRONTEND_URL: ${FRONTEND_URL:-https://accountingsuite.bizabodeserver.org}
       # S3 Configuration
       S3_ENDPOINT: ${S3_ENDPOINT:-http://minio:9000}
       S3_BUCKET: ${S3_BUCKET:-bizabode-accounting}
@@ -105,8 +105,8 @@ services:
       test: ["CMD", "curl", "-f", "http://localhost:3001/healthz"]
       interval: 30s
       timeout: 10s
-      retries: 5
-      start_period: 120s
+      retries: 10
+      start_period: 180s
 
   # 🎨 Frontend
   # Build instructions (defined in docker-compose, executed via Dockerfile):
