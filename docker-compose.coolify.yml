@@ -15,8 +15,10 @@ services:
     networks:
       - bizabode-network
     healthcheck:
-      # Healthcheck with authentication if credentials are provided
-      test: ["CMD-SHELL", "if [ -n \"$$MONGO_INITDB_ROOT_USERNAME\" ] && [ -n \"$$MONGO_INITDB_ROOT_PASSWORD\" ]; then mongosh -u $$MONGO_INITDB_ROOT_USERNAME -p $$MONGO_INITDB_ROOT_PASSWORD --authenticationDatabase admin --eval 'db.adminCommand(\"ping\")' --quiet; else mongosh --eval 'db.adminCommand(\"ping\")' --quiet; fi"]
+      # Simple ping - works with or without authentication
+      # If auth is enabled, this will fail but MongoDB is still running
+      # The backend connection will handle auth properly
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')", "--quiet"]
       interval: 10s
       timeout: 10s
       retries: 10
