@@ -88,7 +88,6 @@ const apiKeySchema = new mongoose.Schema({
 
 // Indexes
 apiKeySchema.index({ tenantId: 1, isActive: 1 });
-// Note: keyPrefix index is defined via schema.index() below
 apiKeySchema.index({ keyPrefix: 1 });
 apiKeySchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
 
