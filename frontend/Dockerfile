@@ -6,7 +6,8 @@ WORKDIR /app
 
 # Build-time environment variables (Coolify can override via Build arguments)
 # These MUST be set as ARG before ENV for Next.js to see them at build time
-ARG NEXT_PUBLIC_API_URL=https://accountingsuite.bizabodeserver.org/api
+# NOTE: Do NOT include /api here - frontend code adds /api to baseURL automatically
+ARG NEXT_PUBLIC_API_URL=https://accountingsuite.bizabodeserver.org
 ARG NEXT_PUBLIC_APP_URL=https://accountingsuite.bizabodeserver.org
 
 # Set build-time env vars (required for Next.js build)
