@@ -24,8 +24,7 @@ const clientUserSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Customer',
     required: [true, 'Customer ID is required'],
-    unique: true,
-    index: true
+    unique: true
   },
   tenantId: {
     type: mongoose.Schema.Types.ObjectId,
@@ -64,7 +63,7 @@ clientUserSchema.methods.matchPassword = async function(enteredPassword) {
 
 // Indexes
 clientUserSchema.index({ tenantId: 1, email: 1 });
-clientUserSchema.index({ customerId: 1 });
+// Note: customerId index is automatically created by unique: true in schema
 
 module.exports = mongoose.model('ClientUser', clientUserSchema);
 

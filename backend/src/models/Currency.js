@@ -62,7 +62,7 @@ const currencySchema = new mongoose.Schema({
 });
 
 // Indexes
-currencySchema.index({ code: 1 });
+// Note: code index is automatically created by unique: true in schema
 currencySchema.index({ isActive: 1 });
 currencySchema.index({ baseCurrency: 1 });
 
