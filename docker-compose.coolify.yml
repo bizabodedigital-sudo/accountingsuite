@@ -15,7 +15,8 @@ services:
     networks:
       - bizabode-network
     healthcheck:
-      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      # Healthcheck with authentication if credentials are provided
+      test: ["CMD-SHELL", "if [ -n \"$$MONGO_INITDB_ROOT_USERNAME\" ] && [ -n \"$$MONGO_INITDB_ROOT_PASSWORD\" ]; then mongosh -u $$MONGO_INITDB_ROOT_USERNAME -p $$MONGO_INITDB_ROOT_PASSWORD --authenticationDatabase admin --eval 'db.adminCommand(\"ping\")' --quiet; else mongosh --eval 'db.adminCommand(\"ping\")' --quiet; fi"]
       interval: 10s
       timeout: 10s
       retries: 10
