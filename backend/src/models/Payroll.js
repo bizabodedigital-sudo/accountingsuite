@@ -185,7 +185,7 @@ const payrollSchema = new mongoose.Schema({
 payrollSchema.index({ tenantId: 1, payDate: -1 });
 payrollSchema.index({ tenantId: 1, employeeId: 1 });
 payrollSchema.index({ tenantId: 1, status: 1 });
-payrollSchema.index({ payrollNumber: 1 });
+// Note: payrollNumber index is automatically created by unique: true in schema
 
 // Pre-save middleware
 payrollSchema.pre('save', async function(next) {

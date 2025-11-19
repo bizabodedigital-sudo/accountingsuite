@@ -14,9 +14,9 @@ const logger = require('../config/logger');
 async function createIndexes() {
   try {
     // Invoice indexes
+    // Note: customerId index is already defined in Invoice model schema
     await mongoose.connection.collection('invoices').createIndexes([
       { key: { tenantId: 1, status: 1 } },
-      { key: { tenantId: 1, customerId: 1 } },
       { key: { tenantId: 1, issueDate: -1 } },
       { key: { tenantId: 1, dueDate: 1 } },
       { key: { tenantId: 1, number: 1 }, unique: true }
@@ -30,8 +30,8 @@ async function createIndexes() {
     ]);
 
     // Customer indexes
+    // Note: email index is already defined in Customer model schema
     await mongoose.connection.collection('customers').createIndexes([
-      { key: { tenantId: 1, email: 1 } },
       { key: { tenantId: 1, name: 1 } }
     ]);
 
@@ -51,8 +51,8 @@ async function createIndexes() {
     ]);
 
     // Chart of Account indexes
+    // Note: code index is already defined in ChartOfAccount model schema
     await mongoose.connection.collection('chartofaccounts').createIndexes([
-      { key: { tenantId: 1, code: 1 }, unique: true },
       { key: { tenantId: 1, type: 1 } },
       { key: { tenantId: 1, isActive: 1 } }
     ]);
@@ -70,8 +70,8 @@ async function createIndexes() {
     ]);
 
     // Employee indexes
+    // Note: email index is already defined in Employee model schema
     await mongoose.connection.collection('employees').createIndexes([
-      { key: { tenantId: 1, email: 1 }, unique: true },
       { key: { tenantId: 1, isActive: 1 } }
     ]);
 
@@ -83,9 +83,9 @@ async function createIndexes() {
     ]);
 
     // Quote indexes
+    // Note: customerId index is already defined in Quote model schema
     await mongoose.connection.collection('quotes').createIndexes([
       { key: { tenantId: 1, status: 1 } },
-      { key: { tenantId: 1, customerId: 1 } },
       { key: { tenantId: 1, issueDate: -1 } }
     ]);
 

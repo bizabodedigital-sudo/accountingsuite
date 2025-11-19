@@ -17,10 +17,22 @@ const s3 = new AWS.S3(s3Config);
 class S3Service {
   constructor() {
     this.bucket = config.storage.s3.bucket;
-    this.initializeBucket();
+    // Only initialize if credentials are provided
+    if (config.storage.s3.accessKey && config.storage.s3.secretKey) {
+      this.initializeBucket().catch(err => {
+        logger.warn(`S3 bucket initialization skipped: ${err.message}`);
+      });
+    } else {
+      logger.warn('S3 service not initialized - credentials missing. File uploads will be disabled.');
+    }
   }
 
   async initializeBucket() {
+    if (!config.storage.s3.accessKey || !config.storage.s3.secretKey) {
+      logger.warn('S3 credentials not configured, skipping bucket initialization');
+      return;
+    }
+
     try {
       // Check if bucket exists
       await s3.headBucket({ Bucket: this.bucket }).promise();
@@ -33,11 +45,11 @@ class S3Service {
           logger.info(`Created S3 bucket '${this.bucket}'`);
         } catch (createError) {
           logger.error(`Failed to create S3 bucket: ${createError.message}`);
-          throw createError;
+          // Don't throw - allow app to continue without S3
         }
       } else {
-        logger.error(`Failed to check S3 bucket: ${error.message}`);
-        throw error;
+        logger.warn(`Failed to check S3 bucket: ${error.message}. File uploads will be disabled.`);
+        // Don't throw - allow app to continue without S3
       }
     }
   }
