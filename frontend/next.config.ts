@@ -12,11 +12,8 @@ const nextConfig: NextConfig = {
   poweredByHeader: false, // Remove X-Powered-By header for security
   reactStrictMode: true, // Enable React strict mode
   
-  // Ensure Turbopack is disabled for production builds
-  // Turbopack is only for development, not production
-  experimental: {
-    turbo: undefined, // Explicitly disable Turbopack
-  },
+  // Turbopack is disabled via NEXT_PRIVATE_SKIP_TURBO=1 environment variable in Dockerfile
+  // No need to configure it here - Next.js 16 uses Webpack by default for production builds
 };
 
 export default nextConfig;
