@@ -53,17 +53,53 @@ const corsOptions = {
       if (allowedOrigins.length === 0) {
         return callback(new Error('FRONTEND_URL must be set in production'));
       }
+      
       // Check if origin matches any allowed origin
       const isAllowed = allowedOrigins.some(allowed => {
         try {
           const allowedUrl = new URL(allowed);
           const originUrl = new URL(origin);
-          return allowedUrl.origin === originUrl.origin;
-        } catch {
+          
+          // Exact match
+          if (allowedUrl.origin === originUrl.origin) {
+            return true;
+          }
+          
+          // Allow subdomains of the same base domain (for Coolify preview deployments)
+          // e.g., allow q00w48cg484wggw80gw8o8k4.bizabodeserver.org if FRONTEND_URL is accountingsuite.bizabodeserver.org
+          const allowedHostname = allowedUrl.hostname;
+          const originHostname = originUrl.hostname;
+          
+          // Check if both are subdomains of the same base domain
+          // Extract base domain (e.g., bizabodeserver.org from accountingsuite.bizabodeserver.org)
+          const allowedParts = allowedHostname.split('.');
+          const originParts = originHostname.split('.');
+          
+          // If both have at least 2 parts, check if they share the same base domain
+          if (allowedParts.length >= 2 && originParts.length >= 2) {
+            const allowedBase = allowedParts.slice(-2).join('.'); // Last 2 parts
+            const originBase = originParts.slice(-2).join('.'); // Last 2 parts
+            
+            if (allowedBase === originBase) {
+              logger.info(`CORS: Allowing origin ${origin} (same base domain as ${allowed})`);
+              return true;
+            }
+          }
+          
+          // Fallback: prefix match
+          return origin.startsWith(allowed);
+        } catch (error) {
+          // If URL parsing fails, try prefix match
           return origin.startsWith(allowed);
         }
       });
-      return isAllowed ? callback(null, true) : callback(new Error('Not allowed by CORS'));
+      
+      if (isAllowed) {
+        return callback(null, true);
+      }
+      
+      logger.warn(`CORS: Blocked origin ${origin}. Allowed origins: ${allowedOrigins.join(', ')}`);
+      return callback(new Error('Not allowed by CORS'));
     }
     
     // In development, allow localhost and configured origins
