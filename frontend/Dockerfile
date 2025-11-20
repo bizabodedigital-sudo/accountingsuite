@@ -52,6 +52,11 @@ RUN npm install --legacy-peer-deps && \
 # Copy application source code
 COPY . .
 
+# Clean any existing build artifacts and node_modules to ensure fresh build
+# This prevents Turbopack chunks from dev builds from being included
+RUN rm -rf .next node_modules/.cache && \
+    echo "Cleaned build artifacts and cache"
+
 # Debug: Print Node/NPM versions and environment BEFORE npm run build
 RUN echo "========================================" && \
     echo "🔍 PRE-BUILD DIAGNOSTICS" && \
