@@ -14,6 +14,7 @@ export default function DashboardPage() {
   const router = useRouter();
   const [dashboardData, setDashboardData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     loadDashboard();
@@ -22,10 +23,14 @@ export default function DashboardPage() {
   const loadDashboard = async () => {
     try {
       setLoading(true);
+      setError(null);
+      console.log('🔍 Loading dashboard data...');
       const response = await dashboardAPI.getDashboard();
+      console.log('✅ Dashboard data loaded:', response.data);
       setDashboardData(response.data.data);
-    } catch (error) {
-      console.error('Failed to load dashboard:', error);
+    } catch (error: any) {
+      console.error('❌ Failed to load dashboard:', error);
+      setError(error.response?.data?.error || error.message || 'Failed to load dashboard');
     } finally {
       setLoading(false);
     }
@@ -39,8 +44,36 @@ export default function DashboardPage() {
     );
   }
 
+  if (error) {
+    return (
+      <div className="h-full flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-red-600 mb-4">Error loading dashboard: {error}</p>
+          <button 
+            onClick={loadDashboard}
+            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   if (!dashboardData) {
-    return null;
+    return (
+      <div className="h-full flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-gray-600 mb-4">No dashboard data available</p>
+          <button 
+            onClick={loadDashboard}
+            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+          >
+            Reload
+          </button>
+        </div>
+      </div>
+    );
   }
 
   const formatCurrency = (amount: number) => {
