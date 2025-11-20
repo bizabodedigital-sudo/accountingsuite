@@ -51,11 +51,17 @@ If you're seeing the login page, that means the 502 error is fixed! 🎉
 1. **In Coolify → Backend Service → Terminal:**
 
 ```bash
-cd /app
-node scripts/seed-database.js
+# From /app directory (backend root in container)
+node src/scripts/seed.js
 ```
 
-**Or if running locally:**
+**Or if running locally from project root:**
+
+```bash
+node backend/src/scripts/seed.js
+```
+
+**Or use the wrapper script (from project root):**
 
 ```bash
 node scripts/seed-database.js
