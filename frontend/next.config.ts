@@ -11,6 +11,12 @@ const nextConfig: NextConfig = {
   compress: true, // Enable gzip compression
   poweredByHeader: false, // Remove X-Powered-By header for security
   reactStrictMode: true, // Enable React strict mode
+  
+  // Ensure Turbopack is disabled for production builds
+  // Turbopack is only for development, not production
+  experimental: {
+    turbo: undefined, // Explicitly disable Turbopack
+  },
 };
 
 export default nextConfig;

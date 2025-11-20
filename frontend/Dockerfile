@@ -83,11 +83,17 @@ RUN echo "========================================" && \
     df -h . 2>/dev/null || echo "Disk info not available (this is normal)" && \
     echo "========================================"
 
+# Clean any existing build artifacts (important for production builds)
+RUN rm -rf .next && \
+    echo "Cleaned any existing build artifacts"
+
 # Build Next.js application
 # Run in separate step so we can see the actual error if it fails
 RUN echo "========================================" && \
     echo "🚀 STARTING NEXT.JS BUILD" && \
     echo "========================================" && \
+    echo "NODE_ENV: $NODE_ENV" && \
+    echo "Building with: npm run build" && \
     npm run build || { \
       echo "" && \
       echo "========================================" && \
