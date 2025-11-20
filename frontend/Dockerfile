@@ -19,6 +19,8 @@ ENV NEXT_PUBLIC_APP_URL=${NEXT_PUBLIC_APP_URL}
 ENV NODE_ENV=production
 ENV NODE_OPTIONS="--max-old-space-size=4096"
 ENV NEXT_TELEMETRY_DISABLED=1
+# Explicitly disable Turbopack - force Webpack for production builds
+ENV NEXT_PRIVATE_SKIP_TURBO=1
 
 # Copy package files first (for better Docker layer caching)
 COPY package*.json ./
@@ -89,8 +91,9 @@ RUN echo "========================================" && \
     echo "========================================"
 
 # Clean any existing build artifacts (important for production builds)
-RUN rm -rf .next && \
-    echo "Cleaned any existing build artifacts"
+# Also clean any Turbopack cache that might exist
+RUN rm -rf .next .turbo node_modules/.cache .swc && \
+    echo "Cleaned all build artifacts, Turbopack cache, and SWC cache"
 
 # Build Next.js application
 # Run in separate step so we can see the actual error if it fails

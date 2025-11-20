@@ -129,6 +129,7 @@ export default function RegisterPage() {
                   value={formData.email}
                   onChange={handleChange}
                   required
+                  autoComplete="email"
                   placeholder="Enter your email"
                 />
               </div>
@@ -141,6 +142,7 @@ export default function RegisterPage() {
                   value={formData.tenantName}
                   onChange={handleChange}
                   required
+                  autoComplete="organization"
                   placeholder="Enter your company name"
                 />
               </div>
@@ -154,6 +156,7 @@ export default function RegisterPage() {
                   value={formData.password}
                   onChange={handleChange}
                   required
+                  autoComplete="new-password"
                   placeholder="Enter your password"
                 />
               </div>
@@ -167,6 +170,7 @@ export default function RegisterPage() {
                   value={formData.confirmPassword}
                   onChange={handleChange}
                   required
+                  autoComplete="new-password"
                   placeholder="Confirm your password"
                 />
               </div>
