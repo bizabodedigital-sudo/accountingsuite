@@ -82,6 +82,18 @@ const seedData = async () => {
 
     logger.info('Created sample users');
 
+    // Verify passwords are hashed correctly
+    const testOwner = await User.findOne({ email: 'owner@jamaicatech.com' }).select('+password');
+    if (testOwner) {
+      const passwordMatch = await testOwner.comparePassword('password123');
+      if (passwordMatch) {
+        logger.info('✅ Password verification successful for owner user');
+      } else {
+        logger.error('❌ Password verification failed for owner user - this should not happen!');
+        throw new Error('Password hashing verification failed');
+      }
+    }
+
     // Create comprehensive products
     const products = await Product.create([
       // Software Development Services
