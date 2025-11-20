@@ -1,10 +1,10 @@
 import axios from 'axios';
 
-// API base URL - must be set via NEXT_PUBLIC_API_URL environment variable in production
-// During build, use a fallback to prevent build errors
+// API base URL - use relative URLs so Next.js API routes can proxy to backend
+// The Next.js API route at /api/[...path] will proxy requests to the backend
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 
   (typeof window !== 'undefined' 
-    ? window.location.origin.replace(':3000', ':3001') 
+    ? '' // Use relative URLs - Next.js will proxy via /api/[...path]
     : 'http://localhost:3001');
 
 // Create axios instance
