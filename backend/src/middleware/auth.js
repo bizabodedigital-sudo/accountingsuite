@@ -1,10 +1,20 @@
 const jwt = require('jsonwebtoken');
+const mongoose = require('mongoose');
 const User = require('../models/User');
 const logger = require('../config/logger');
 
 // Protect routes - verify JWT token
 const protect = async (req, res, next) => {
   try {
+    // Check if MongoDB is connected
+    if (mongoose.connection.readyState !== 1) {
+      logger.error('JWT authentication failed: MongoDB is not connected');
+      return res.status(503).json({
+        success: false,
+        error: 'Database connection unavailable. Please try again later.'
+      });
+    }
+
     let token;
 
     // Get token from header
@@ -24,7 +34,21 @@ const protect = async (req, res, next) => {
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
       
       // Get user from database
-      const user = await User.findById(decoded.id).select('+password');
+      let user;
+      try {
+        user = await User.findById(decoded.id).select('+password');
+      } catch (dbError) {
+        logger.error('Database error during user lookup:', dbError);
+        // Check if it's a connection error
+        if (mongoose.connection.readyState !== 1) {
+          return res.status(503).json({
+            success: false,
+            error: 'Database connection unavailable. Please try again later.'
+          });
+        }
+        // Re-throw other database errors
+        throw dbError;
+      }
       
       if (!user) {
         return res.status(401).json({

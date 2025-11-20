@@ -16,6 +16,16 @@ const generateToken = (id) => {
 // @access  Public
 const register = async (req, res) => {
   try {
+    // Check if MongoDB is connected
+    const mongoose = require('mongoose');
+    if (mongoose.connection.readyState !== 1) {
+      logger.error('Registration failed: MongoDB is not connected');
+      return res.status(503).json({
+        success: false,
+        error: 'Database connection unavailable. Please try again later.'
+      });
+    }
+
     const { email, password, firstName, lastName, tenantName } = req.body;
 
     // Check if user already exists
@@ -80,6 +90,16 @@ const register = async (req, res) => {
 // @access  Public
 const login = async (req, res) => {
   try {
+    // Check if MongoDB is connected
+    const mongoose = require('mongoose');
+    if (mongoose.connection.readyState !== 1) {
+      logger.error('Login failed: MongoDB is not connected');
+      return res.status(503).json({
+        success: false,
+        error: 'Database connection unavailable. Please try again later.'
+      });
+    }
+
     const { email, password } = req.body;
 
     // Validate email & password
@@ -91,7 +111,21 @@ const login = async (req, res) => {
     }
 
     // Check for user (include password for comparison)
-    const user = await User.findOne({ email }).select('+password').populate('tenantId');
+    let user;
+    try {
+      user = await User.findOne({ email }).select('+password').populate('tenantId');
+    } catch (dbError) {
+      logger.error('Database error during login:', dbError);
+      // Check if it's a connection error
+      if (mongoose.connection.readyState !== 1) {
+        return res.status(503).json({
+          success: false,
+          error: 'Database connection unavailable. Please try again later.'
+        });
+      }
+      // Re-throw other database errors
+      throw dbError;
+    }
     
     if (!user) {
       return res.status(401).json({

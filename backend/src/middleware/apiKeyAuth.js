@@ -1,4 +1,5 @@
 const ApiKey = require('../models/ApiKey');
+const mongoose = require('mongoose');
 const logger = require('../config/logger');
 
 /**
@@ -7,6 +8,15 @@ const logger = require('../config/logger');
  */
 const apiKeyAuth = async (req, res, next) => {
   try {
+    // Check if MongoDB is connected
+    if (mongoose.connection.readyState !== 1) {
+      logger.error('API key authentication failed: MongoDB is not connected');
+      return res.status(503).json({
+        success: false,
+        error: 'Database connection unavailable. Please try again later.'
+      });
+    }
+
     let apiKeyValue = null;
 
     // Try to get API key from Authorization header (Bearer format)
@@ -26,7 +36,21 @@ const apiKeyAuth = async (req, res, next) => {
     }
 
     // Find API key in database
-    const apiKey = await ApiKey.findOne({ key: apiKeyValue });
+    let apiKey;
+    try {
+      apiKey = await ApiKey.findOne({ key: apiKeyValue });
+    } catch (dbError) {
+      logger.error('Database error during API key lookup:', dbError);
+      // Check if it's a connection error
+      if (mongoose.connection.readyState !== 1) {
+        return res.status(503).json({
+          success: false,
+          error: 'Database connection unavailable. Please try again later.'
+        });
+      }
+      // Re-throw other database errors
+      throw dbError;
+    }
 
     if (!apiKey) {
       return res.status(401).json({
@@ -60,10 +84,19 @@ const apiKeyAuth = async (req, res, next) => {
       });
     }
 
-    // Update usage statistics
-    apiKey.lastUsed = new Date();
-    apiKey.usageCount = (apiKey.usageCount || 0) + 1;
-    await apiKey.save();
+    // Update usage statistics (only if database is connected)
+    try {
+      if (mongoose.connection.readyState === 1) {
+        apiKey.lastUsed = new Date();
+        apiKey.usageCount = (apiKey.usageCount || 0) + 1;
+        await apiKey.save();
+      } else {
+        logger.warn('Skipping API key usage update: MongoDB disconnected');
+      }
+    } catch (saveError) {
+      // Log but don't fail the request if usage update fails
+      logger.warn('Failed to update API key usage statistics:', saveError);
+    }
 
     // Attach API key info to request
     req.apiKey = apiKey;
@@ -160,6 +193,7 @@ module.exports = {
   requireScope,
   checkRateLimit
 };
+
 
 
 

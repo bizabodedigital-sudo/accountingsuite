@@ -10,6 +10,16 @@ const logger = require('../config/logger');
  */
 const registerClient = async (req, res) => {
   try {
+    // Check if MongoDB is connected
+    const mongoose = require('mongoose');
+    if (mongoose.connection.readyState !== 1) {
+      logger.error('Client registration failed: MongoDB is not connected');
+      return res.status(503).json({
+        success: false,
+        error: 'Database connection unavailable. Please try again later.'
+      });
+    }
+
     const { email, password, customerId, tenantId } = req.body;
 
     // Check if customer exists
@@ -87,12 +97,36 @@ const registerClient = async (req, res) => {
  */
 const loginClient = async (req, res) => {
   try {
+    // Check if MongoDB is connected
+    const mongoose = require('mongoose');
+    if (mongoose.connection.readyState !== 1) {
+      logger.error('Client login failed: MongoDB is not connected');
+      return res.status(503).json({
+        success: false,
+        error: 'Database connection unavailable. Please try again later.'
+      });
+    }
+
     const { email, password } = req.body;
 
     // Find client user with password
-    const clientUser = await ClientUser.findOne({ email })
-      .select('+password')
-      .populate('customerId', 'name email phone address');
+    let clientUser;
+    try {
+      clientUser = await ClientUser.findOne({ email })
+        .select('+password')
+        .populate('customerId', 'name email phone address');
+    } catch (dbError) {
+      logger.error('Database error during client login:', dbError);
+      // Check if it's a connection error
+      if (mongoose.connection.readyState !== 1) {
+        return res.status(503).json({
+          success: false,
+          error: 'Database connection unavailable. Please try again later.'
+        });
+      }
+      // Re-throw other database errors
+      throw dbError;
+    }
 
     if (!clientUser || !clientUser.isActive) {
       return res.status(401).json({
