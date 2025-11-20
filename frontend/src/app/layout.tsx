@@ -12,6 +12,9 @@ const fontClass = 'font-sans'
 export const metadata: Metadata = {
   title: 'Bizabode Accounting Suite',
   description: 'Modern invoicing & bookkeeping for Jamaican SMEs',
+  icons: {
+    icon: '/favicon.ico',
+  },
 }
 
 export default function RootLayout({
