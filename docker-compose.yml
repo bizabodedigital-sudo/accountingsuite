@@ -29,7 +29,6 @@ services:
       NODE_ENV: production
       PORT: 3001
       MONGODB_URI: mongodb://mongo:27017/bizabode
-      REDIS_URL: ${REDIS_URL:-redis://redis:6379}
       JWT_SECRET: ${JWT_SECRET}
       JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-24h}
       FRONTEND_URL: ${FRONTEND_URL}
