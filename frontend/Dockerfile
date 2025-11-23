@@ -34,7 +34,7 @@ RUN echo "========================================" && \
     echo "NEXT_PUBLIC_APP_URL=${NEXT_PUBLIC_APP_URL}" && \
     echo "NODE_ENV=${NODE_ENV}" && \
     echo "========================================" && \
-    npm run build 2>&1 | tee build.log || (echo "========================================" && echo "BUILD FAILED - Full error log:" && cat build.log && exit 1)
+    npm run build
 
 # Production stage
 FROM node:22-alpine AS runner
