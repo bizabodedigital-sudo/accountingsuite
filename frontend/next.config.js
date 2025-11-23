@@ -25,6 +25,11 @@ const nextConfig = {
     };
     return config;
   },
+  
+  // Generate unique build ID to bust browser cache
+  generateBuildId: async () => {
+    return `build-${Date.now()}`;
+  },
 };
 
 module.exports = nextConfig;
