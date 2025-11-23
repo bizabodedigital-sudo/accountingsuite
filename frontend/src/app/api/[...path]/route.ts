@@ -5,42 +5,37 @@ const BACKEND_URL = process.env.BACKEND_URL || 'http://backend:3001';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ path: string[] }> }
+  { params }: { params: { path: string[] } }
 ) {
-  const resolvedParams = await params;
-  return proxyRequest(request, resolvedParams.path, 'GET');
+  return proxyRequest(request, params.path, 'GET');
 }
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: Promise<{ path: string[] }> }
+  { params }: { params: { path: string[] } }
 ) {
-  const resolvedParams = await params;
-  return proxyRequest(request, resolvedParams.path, 'POST');
+  return proxyRequest(request, params.path, 'POST');
 }
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: Promise<{ path: string[] }> }
+  { params }: { params: { path: string[] } }
 ) {
-  const resolvedParams = await params;
-  return proxyRequest(request, resolvedParams.path, 'PUT');
+  return proxyRequest(request, params.path, 'PUT');
 }
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: Promise<{ path: string[] }> }
+  { params }: { params: { path: string[] } }
 ) {
-  const resolvedParams = await params;
-  return proxyRequest(request, resolvedParams.path, 'PATCH');
+  return proxyRequest(request, params.path, 'PATCH');
 }
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: Promise<{ path: string[] }> }
+  { params }: { params: { path: string[] } }
 ) {
-  const resolvedParams = await params;
-  return proxyRequest(request, resolvedParams.path, 'DELETE');
+  return proxyRequest(request, params.path, 'DELETE');
 }
 
 async function proxyRequest(
