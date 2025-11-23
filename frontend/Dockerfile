@@ -10,10 +10,9 @@ WORKDIR /app
 ARG NEXT_PUBLIC_API_URL=http://localhost:3001
 ARG NEXT_PUBLIC_APP_URL=http://localhost:3000
 
-# Set build-time environment variables
+# Set build-time environment variables (but NOT NODE_ENV yet - we need devDependencies)
 ENV NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
 ENV NEXT_PUBLIC_APP_URL=${NEXT_PUBLIC_APP_URL}
-ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV NODE_OPTIONS="--max-old-space-size=4096"
 
@@ -21,8 +20,12 @@ ENV NODE_OPTIONS="--max-old-space-size=4096"
 COPY package*.json ./
 
 # Install ALL dependencies (including devDependencies for build)
+# Don't set NODE_ENV=production yet - we need devDependencies for TypeScript, Tailwind, etc.
 RUN npm install --legacy-peer-deps && \
     npm cache clean --force
+
+# NOW set NODE_ENV=production for the build
+ENV NODE_ENV=production
 
 # Copy application source
 COPY . .
