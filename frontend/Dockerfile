@@ -20,7 +20,7 @@ ENV NEXT_TELEMETRY_DISABLED=1
 COPY package*.json ./
 
 # Install ALL dependencies (including devDependencies for build)
-RUN npm ci --legacy-peer-deps && \
+RUN npm install --legacy-peer-deps && \
     npm cache clean --force
 
 # Copy application source
