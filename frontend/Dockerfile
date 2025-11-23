@@ -7,14 +7,15 @@ FROM node:22-alpine AS builder
 WORKDIR /app
 
 # Build arguments (must be set at build time)
-ARG NEXT_PUBLIC_API_URL
-ARG NEXT_PUBLIC_APP_URL
+ARG NEXT_PUBLIC_API_URL=http://localhost:3001
+ARG NEXT_PUBLIC_APP_URL=http://localhost:3000
 
 # Set build-time environment variables
 ENV NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
 ENV NEXT_PUBLIC_APP_URL=${NEXT_PUBLIC_APP_URL}
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
+ENV NODE_OPTIONS="--max-old-space-size=4096"
 
 # Copy package files
 COPY package*.json ./
@@ -27,7 +28,10 @@ RUN npm install --legacy-peer-deps && \
 COPY . .
 
 # Build Next.js application
-RUN npm run build
+RUN echo "Building with:" && \
+    echo "NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}" && \
+    echo "NEXT_PUBLIC_APP_URL=${NEXT_PUBLIC_APP_URL}" && \
+    npm run build || (echo "Build failed! Check errors above." && exit 1)
 
 # Production stage
 FROM node:22-alpine AS runner
