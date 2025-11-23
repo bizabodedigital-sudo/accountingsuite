@@ -1,133 +1,161 @@
-# Production Setup Checklist
+# Production Setup Guide
 
-## ✅ Completed
+## Clean Docker Compose Setup
 
-- [x] Removed local environment files (backend/env.local, frontend/env.local)
-- [x] Created production docker-compose.yml (docker-compose.prod.yml)
-- [x] Updated .gitignore to exclude all env files
-- [x] Created database seed scripts
-- [x] Created deployment documentation
-- [x] Updated README with production deployment info
-- [x] Removed local-specific paths from docker-compose
-- [x] All code pushed to GitHub: https://github.com/bizabodedigital-sudo/accountingsuite
+This setup uses a simple docker-compose configuration similar to local development but optimized for production.
 
-## 📋 Next Steps for Coolify Deployment
+## Quick Start
 
-### 1. Environment Variables Setup
+### 1. Set Environment Variables
 
-In Coolify, configure these environment variables for each service:
-
-#### Backend Service
-```
-NODE_ENV=production
-PORT=3001
-MONGODB_URI=mongodb://mongo:27017/bizabode
-REDIS_URL=redis://redis:6379
-JWT_SECRET=<generate-strong-secret>
-JWT_EXPIRES_IN=24h
-FRONTEND_URL=https://your-domain.com
-S3_ENDPOINT=https://your-s3-endpoint.com
-S3_BUCKET=bizabode-accounting
-S3_ACCESS_KEY=<your-key>
-S3_SECRET_KEY=<your-secret>
-S3_REGION=us-east-1
-S3_FORCE_PATH_STYLE=true
-SMTP_HOST=<optional>
-SMTP_PORT=587
-SMTP_USER=<optional>
-SMTP_PASS=<optional>
-LOG_LEVEL=info
-```
-
-#### Frontend Service
-```
-NODE_ENV=production
-NEXT_PUBLIC_API_URL=https://api.your-domain.com
-NEXT_PUBLIC_APP_URL=https://your-domain.com
-```
-
-### 2. Database Seeding
-
-After deployment, run the seed script:
+Create a `.env` file in the root directory with your production values:
 
 ```bash
-# Option 1: Using the Node script
-node scripts/seed-database.js
+# JWT Configuration
+JWT_SECRET=your-super-secret-jwt-key-change-this
+JWT_EXPIRES_IN=24h
 
-# Option 2: Using the shell script
-bash scripts/seed-database.sh
+# Frontend URLs
+NEXT_PUBLIC_API_URL=https://api.yourdomain.com
+NEXT_PUBLIC_APP_URL=https://yourdomain.com
+FRONTEND_URL=https://yourdomain.com
 
-# Option 3: Direct backend script
-cd backend && node src/scripts/seed.js
+# MinIO S3 Configuration (if using)
+S3_ENDPOINT=http://minio:9000
+S3_BUCKET=bizabode-accounting
+S3_ACCESS_KEY=your-minio-access-key
+S3_SECRET_KEY=your-minio-secret-key
+S3_REGION=us-east-1
+S3_FORCE_PATH_STYLE=true
 ```
 
-### 3. Default Login Credentials
+### 2. Build and Start
 
-After seeding, use these credentials (⚠️ CHANGE IMMEDIATELY):
+```bash
+# Build and start all services
+docker-compose -f docker-compose.prod.yml up -d --build
 
-- **Owner**: owner@jamaicatech.com / password123
-- **Accountant**: accountant@jamaicatech.com / password123
-- **Staff**: staff@jamaicatech.com / password123
+# View logs
+docker-compose -f docker-compose.prod.yml logs -f
 
-### 4. Features Included
+# Stop services
+docker-compose -f docker-compose.prod.yml down
 
-✅ All new features are included:
-- Tax calculation (Jamaican GCT)
-- User roles & permissions
-- Auto backup and recovery
-- Email options
-- Multi-currency support
-- Document upload and save
-- Inventory management
-- Comprehensive settings system
+# Stop and remove volumes (⚠️ deletes database)
+docker-compose -f docker-compose.prod.yml down -v
+```
 
-### 5. API Endpoints
+## Services
 
-All API endpoints are production-ready:
-- `/api/auth/*` - Authentication
-- `/api/invoices/*` - Invoice management
-- `/api/customers/*` - Customer management
-- `/api/products/*` - Product management
-- `/api/expenses/*` - Expense management
-- `/api/settings/*` - Settings management
-- `/api/tax/*` - Tax calculations
-- `/api/backup/*` - Backup & restore
-- `/api/documents/*` - Document management
-- `/api/currencies/*` - Currency management
-- `/api/inventory/*` - Inventory management
+### Frontend (Port 3000)
+- Next.js production build
+- Connects to backend via internal Docker network
+- Uses Next.js API proxy route for `/api/*` requests
 
-## 🔒 Security Notes
+### Backend (Port 3001)
+- Express.js API server
+- Connects to MongoDB
+- Health check endpoint: `/healthz`
 
-1. **JWT Secret**: Generate a strong secret (minimum 32 characters)
-   ```bash
-   openssl rand -base64 32
-   ```
+### MongoDB (Port 27017)
+- Database with persistent volume
+- Data stored in `mongo_data` volume
 
-2. **Database**: Use strong MongoDB credentials in production
+## Architecture
 
-3. **S3 Storage**: Use production S3 credentials (not MinIO defaults)
+```
+┌─────────────┐
+│   Frontend  │ (Port 3000)
+│  (Next.js)  │
+└──────┬──────┘
+       │
+       │ /api/* → Next.js API Proxy
+       │
+┌──────▼──────┐
+│   Backend   │ (Port 3001)
+│  (Express)  │
+└──────┬──────┘
+       │
+       ├───► MongoDB (Port 27017)
+```
 
-4. **HTTPS**: Ensure SSL/HTTPS is enabled in Coolify
+## How It Works
 
-5. **Environment Variables**: Never commit .env files to Git
+1. **Frontend** serves the Next.js application on port 3000
+2. **API Requests** from frontend go to `/api/*` routes
+3. **Next.js API Proxy** (`frontend/src/app/api/[...path]/route.ts`) forwards requests to backend
+4. **Backend** processes requests and connects to MongoDB
+5. **MongoDB** stores all data persistently
 
-## 📚 Documentation
+## Environment Variables
 
-- **Deployment Guide**: See [DEPLOYMENT.md](./DEPLOYMENT.md)
-- **New Features**: See [NEW_FEATURES.md](./NEW_FEATURES.md)
-- **Feature Locations**: See [FEATURE_LOCATIONS.md](./FEATURE_LOCATIONS.md)
+### Required for Backend
+- `JWT_SECRET` - Secret key for JWT tokens
+- `MONGODB_URI` - MongoDB connection string (auto-set to `mongodb://mongo:27017/bizabode`)
+- `FRONTEND_URL` - Frontend URL for CORS
 
-## 🐛 Troubleshooting
+### Required for Frontend (Build Time)
+- `NEXT_PUBLIC_API_URL` - Public API URL (used at build time)
+- `NEXT_PUBLIC_APP_URL` - Public app URL (used at build time)
 
-If you encounter issues:
+### Required for Frontend (Runtime)
+- `BACKEND_URL` - Internal backend URL (auto-set to `http://backend:3001`)
 
-1. Check Coolify logs for each service
-2. Verify all environment variables are set
-3. Ensure MongoDB and Redis are accessible
-4. Check network connectivity between services
-5. Verify S3 credentials are correct
+## Deployment in Coolify
 
-## 📞 Support
+1. **Upload docker-compose.prod.yml** to Coolify
+2. **Set environment variables** in Coolify UI
+3. **Configure domains:**
+   - Frontend: `yourdomain.com` → `frontend:3000`
+   - Backend API: `api.yourdomain.com` → `backend:3001` (optional, if using direct API calls)
 
-For deployment assistance, refer to the deployment documentation or contact the development team.
+4. **Deploy** and Coolify will handle the rest
 
+## Health Checks
+
+All services have health checks:
+
+- **Frontend**: `http://localhost:3000` (HTTP 200)
+- **Backend**: `http://localhost:3001/healthz` (HTTP 200)
+- **MongoDB**: `mongosh --eval "db.adminCommand('ping')"`
+
+## Troubleshooting
+
+### Frontend can't connect to backend
+- Check `BACKEND_URL` is set to `http://backend:3001`
+- Verify both services are on the same network (`bizabode-network`)
+- Check backend logs: `docker-compose -f docker-compose.prod.yml logs backend`
+
+### Backend can't connect to MongoDB
+- Check MongoDB is healthy: `docker-compose -f docker-compose.prod.yml ps`
+- Verify `MONGODB_URI` is `mongodb://mongo:27017/bizabode`
+- Check MongoDB logs: `docker-compose -f docker-compose.prod.yml logs mongo`
+
+### Build fails
+- Check environment variables are set correctly
+- Verify `NEXT_PUBLIC_API_URL` and `NEXT_PUBLIC_APP_URL` are set at build time
+- Check build logs: `docker-compose -f docker-compose.prod.yml build --no-cache frontend`
+
+## Database Persistence
+
+MongoDB data is stored in a Docker volume (`mongo_data`). To backup:
+
+```bash
+# Create backup
+docker run --rm -v bizabode-mongo-prod_mongo_data:/data -v $(pwd):/backup mongo:7.0 tar czf /backup/mongo-backup.tar.gz /data
+
+# Restore backup
+docker run --rm -v bizabode-mongo-prod_mongo_data:/data -v $(pwd):/backup mongo:7.0 tar xzf /backup/mongo-backup.tar.gz -C /
+```
+
+## Clean Restart
+
+To completely reset everything:
+
+```bash
+# Stop and remove everything including volumes
+docker-compose -f docker-compose.prod.yml down -v
+
+# Rebuild and start fresh
+docker-compose -f docker-compose.prod.yml up -d --build
+```

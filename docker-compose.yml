@@ -1,168 +1,113 @@
-# version: '3.8'  # Removed to avoid deprecation warning
+# Production Docker Compose Configuration
+# Clean, simple setup similar to local development but optimized for production
 
 services:
   # 🗄️ MongoDB Database
   mongo:
     image: mongo:7.0
-    container_name: bizabode-mongo-dev
+    container_name: bizabode-mongo-prod
     restart: unless-stopped
-    ports:
-      - "27017:27017"
     environment:
       MONGO_INITDB_DATABASE: bizabode
     volumes:
       - mongo_data:/data/db
     networks:
       - bizabode-network
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
 
-  # 🔴 Redis Cache
+  # 🔴 Redis Cache (optional, used by workers)
   redis:
     image: redis:7-alpine
-    container_name: bizabode-redis-dev
+    container_name: bizabode-redis-prod
     restart: unless-stopped
-    ports:
-      - "6379:6379"
     volumes:
       - redis_data:/data
     networks:
       - bizabode-network
-
-  # 📦 MinIO S3 Storage
-  minio:
-    image: minio/minio:latest
-    container_name: bizabode-minio-dev
-    restart: unless-stopped
-    ports:
-      - "9000:9000"    # API port
-      - "9001:9001"    # Console port
-    environment:
-      MINIO_ROOT_USER: minioadmin
-      MINIO_ROOT_PASSWORD: minioadmin123
-      MINIO_DEFAULT_BUCKETS: bizabode-accounting
-      MINIO_VOLUMES: /data
-    volumes:
-      - minio_data:/data
-      - ./services/minio/config:/root/.minio
-    command: server /data --console-address ":9001"
-    networks:
-      - bizabode-network
     healthcheck:
-      test: ["CMD", "mc", "ready", "local"]
-      interval: 30s
-      timeout: 10s
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
       retries: 5
-      start_period: 20s
+      start_period: 10s
 
   # ⚙️ Backend API
   backend:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    container_name: bizabode-backend-dev
+    container_name: bizabode-backend-prod
     restart: unless-stopped
-    ports:
-      - "3001:3001"
     environment:
-      NODE_ENV: development
+      NODE_ENV: production
       PORT: 3001
       MONGODB_URI: mongodb://mongo:27017/bizabode
       REDIS_URL: redis://redis:6379
-      JWT_SECRET: supersecret_jwt_key_for_development
-      JWT_EXPIRES_IN: 1h
-      # MinIO S3 Configuration
-      S3_ENDPOINT: http://minio:9000
-      S3_BUCKET: bizabode-accounting
-      S3_ACCESS_KEY: minioadmin
-      S3_SECRET_KEY: minioadmin123
-      S3_REGION: us-east-1
-      S3_FORCE_PATH_STYLE: true
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-24h}
+      FRONTEND_URL: ${FRONTEND_URL}
+      # MinIO S3 Configuration (if using MinIO)
+      S3_ENDPOINT: ${S3_ENDPOINT:-http://minio:9000}
+      S3_BUCKET: ${S3_BUCKET:-bizabode-accounting}
+      S3_ACCESS_KEY: ${S3_ACCESS_KEY}
+      S3_SECRET_KEY: ${S3_SECRET_KEY}
+      S3_REGION: ${S3_REGION:-us-east-1}
+      S3_FORCE_PATH_STYLE: ${S3_FORCE_PATH_STYLE:-true}
     depends_on:
-      - mongo
-      - redis
-      - minio
-    volumes:
-      - ./backend:/app
-      - /app/node_modules
-    command: node src/app.js
+      mongo:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     networks:
       - bizabode-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3001/healthz"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
 
   # 🎨 Frontend
   frontend:
     build:
       context: ./frontend
       dockerfile: Dockerfile
-    container_name: bizabode-frontend-dev
-    restart: unless-stopped
-    ports:
-      - "3000:3000"
-    environment:
-      NODE_ENV: development
-      NEXT_PUBLIC_API_URL: http://localhost:3001
-    depends_on:
-      - backend
-    volumes:
-      - ./frontend:/app
-      - /app/node_modules
-      - /app/.next
-    command: npm run dev
-    networks:
-      - bizabode-network
-
-  # 📊 Mongo Express - MongoDB Web Admin
-  mongo-express:
-    image: mongo-express:latest
-    container_name: bizabode-mongo-express-dev
-    restart: unless-stopped
-    ports:
-      - "8081:8081"
-    environment:
-      ME_CONFIG_MONGODB_ADMINUSERNAME: ""
-      ME_CONFIG_MONGODB_ADMINPASSWORD: ""
-      ME_CONFIG_MONGODB_URL: mongodb://mongo:27017/bizabode
-      ME_CONFIG_MONGODB_ENABLE_ADMIN: "false"
-      ME_CONFIG_BASICAUTH_USERNAME: admin
-      ME_CONFIG_BASICAUTH_PASSWORD: admin123
-      ME_CONFIG_DEFAULT_DATABASE: bizabode
-    depends_on:
-      - mongo
-    networks:
-      - bizabode-network
-
-  # 🔄 Background Worker
-  worker:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile
-    container_name: bizabode-worker-dev
+      args:
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
+        NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL}
+    container_name: bizabode-frontend-prod
     restart: unless-stopped
     environment:
-      NODE_ENV: development
-      MONGODB_URI: mongodb://mongo:27017/bizabode
-      REDIS_URL: redis://redis:6379
-      JWT_SECRET: supersecret_jwt_key_for_development
-      # MinIO S3 Configuration
-      S3_ENDPOINT: http://minio:9000
-      S3_BUCKET: bizabode-accounting
-      S3_ACCESS_KEY: minioadmin
-      S3_SECRET_KEY: minioadmin123
-      S3_REGION: us-east-1
-      S3_FORCE_PATH_STYLE: true
+      NODE_ENV: production
+      PORT: 3000
+      HOSTNAME: 0.0.0.0
+      # Backend URL for Next.js API proxy (internal Docker network)
+      BACKEND_URL: http://backend:3001
+      # Public URLs (already set at build time, but keep for runtime)
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
+      NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL}
     depends_on:
-      - mongo
-      - redis
-      - minio
-    volumes:
-      - ./backend:/app
-      - /app/node_modules
-    command: node src/worker.js
+      backend:
+        condition: service_healthy
     networks:
       - bizabode-network
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
 
 volumes:
   mongo_data:
+    driver: local
   redis_data:
-  minio_data:
+    driver: local
 
 networks:
   bizabode-network:
