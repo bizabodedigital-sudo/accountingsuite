@@ -7,8 +7,8 @@ FROM node:22-alpine AS builder
 WORKDIR /app
 
 # Build arguments (must be set at build time)
-ARG NEXT_PUBLIC_API_URL=http://localhost:3001
-ARG NEXT_PUBLIC_APP_URL=http://localhost:3000
+ARG NEXT_PUBLIC_API_URL=https://api.accountingsuites.bizabodeserver.org
+ARG NEXT_PUBLIC_APP_URL=https://accountingsuites.bizabodeserver.org
 
 # Set build-time environment variables (but NOT NODE_ENV yet - we need devDependencies)
 ENV NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
