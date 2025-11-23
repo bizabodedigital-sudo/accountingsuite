@@ -1,3 +1,5 @@
+const path = require('path');
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   // Production optimizations
@@ -13,6 +15,15 @@ const nextConfig = {
   // Next.js 14 uses Webpack by default, but we're being explicit
   experimental: {
     // No experimental features that might enable Turbopack
+  },
+  
+  // Configure webpack to resolve @ alias
+  webpack: (config) => {
+    config.resolve.alias = {
+      ...config.resolve.alias,
+      '@': path.resolve(__dirname, 'src'),
+    };
+    return config;
   },
 };
 
