@@ -52,9 +52,9 @@ USER nextjs
 
 EXPOSE 3000
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+# Health check (give Next.js time to start)
+HEALTHCHECK --interval=30s --timeout=10s --start-period=120s --retries=5 \
   CMD node -e "require('http').get('http://localhost:3000', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"
 
-# Start
-CMD ["npm", "start"]
+# Start Next.js (explicitly set host and port)
+CMD ["sh", "-c", "npm start -- -H 0.0.0.0 -p 3000"]
