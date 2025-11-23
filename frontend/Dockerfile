@@ -15,8 +15,8 @@ ARG NEXT_PUBLIC_APP_URL=https://accountingsuite.bizabodeserver.org
 ENV NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
 ENV NEXT_PUBLIC_APP_URL=${NEXT_PUBLIC_APP_URL}
 
-# Production environment settings
-ENV NODE_ENV=production
+# Build environment settings (NODE_ENV will be set to production AFTER dependencies are installed)
+# We need devDependencies for the build, so don't set NODE_ENV=production yet
 ENV NODE_OPTIONS="--max-old-space-size=4096"
 ENV NEXT_TELEMETRY_DISABLED=1
 # Explicitly disable Turbopack - force Webpack for production builds
@@ -47,9 +47,12 @@ RUN echo "========================================" && \
 # Install ALL dependencies (including devDependencies needed for build)
 # CRITICAL: Do NOT use --only=production or --omit=dev here!
 # Next.js build requires devDependencies like TypeScript, Tailwind, etc.
-RUN npm install --legacy-peer-deps && \
+# Explicitly include devDependencies since NODE_ENV might affect installation
+RUN npm install --legacy-peer-deps --include=dev && \
     npm cache clean --force && \
-    echo "✅ Dependencies installed successfully"
+    echo "✅ Dependencies installed successfully" && \
+    echo "Verifying critical devDependencies:" && \
+    npm list @tailwindcss/postcss tailwindcss typescript || echo "⚠️  Some devDependencies may be missing"
 
 # Copy application source code
 COPY . .
@@ -94,6 +97,9 @@ RUN echo "========================================" && \
 # Also clean any Turbopack cache that might exist
 RUN rm -rf .next .turbo node_modules/.cache .swc && \
     echo "Cleaned all build artifacts, Turbopack cache, and SWC cache"
+
+# Set NODE_ENV=production NOW (after dependencies are installed, before build)
+ENV NODE_ENV=production
 
 # Build Next.js application
 # Run in separate step so we can see the actual error if it fails
