@@ -28,10 +28,13 @@ RUN npm install --legacy-peer-deps && \
 COPY . .
 
 # Build Next.js application
-RUN echo "Building with:" && \
+RUN echo "========================================" && \
+    echo "Building Next.js application" && \
     echo "NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}" && \
     echo "NEXT_PUBLIC_APP_URL=${NEXT_PUBLIC_APP_URL}" && \
-    npm run build || (echo "Build failed! Check errors above." && exit 1)
+    echo "NODE_ENV=${NODE_ENV}" && \
+    echo "========================================" && \
+    npm run build 2>&1 | tee build.log || (echo "========================================" && echo "BUILD FAILED - Full error log:" && cat build.log && exit 1)
 
 # Production stage
 FROM node:22-alpine AS runner
